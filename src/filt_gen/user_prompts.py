@@ -55,7 +55,8 @@ def choose_filter_value(filter):
             except ValueError:
                 print("%s filter requires values of type %s." % (filter.get_name(), str(filter.get_type())))
                 continue
-            filter.set_value(value_obj)
+            if filter.set_value(value_obj)!=0:
+                continue
             break
     elif value_type_choice_int==filters.FilterParams.MULTIPLE_VALUES:
         while True:
@@ -69,47 +70,53 @@ def choose_filter_value(filter):
                     print("%s filter requires values of type %s." % (filter.get_name(), str(filter.get_type())))
                     continue
                 value_list.append(value_obj)
-            filter.set_values(value_list)
+            if filter.set_values(value_list)!=0:
+                continue
             break
     elif value_type_choice_int==filters.FilterParams.VALUE_RANGE:
         while True:
-            values = input("What range do you want to use? Specify as min, max. ")
-            if values.find(",")<0:
-                #Didn't provide a comma
+            values = input("What range do you want to use? Specify as min, max: ")
+            pieces = values.split(",")
+            if len(pieces)!=2:
                 print("'%s' isn't in min, max format." % values)
                 continue
-            (min_val, max_val) = values.split(',')
+            (min_val, max_val) = pieces
             try:
                 min_obj = filter.get_type()(min_val)
                 max_obj = filter.get_type()(max_val)
             except ValueError:
                 print("%s filter requires values of type %s." % (filter.get_name(), str(filter.get_type())))
                 continue
-            filter.set_value_range(min_obj, max_obj)
+            if filter.set_value_range(min_obj, max_obj)!=0:
+                continue
             break
     return filter
 
 
 def choose_filters(filter_list):
     selected_filters = []
+    remaining_filter_list = []
+    for f in filter_list:
+        remaining_filter_list.append(f)
     while True:
         print("These are the available filters you can use to get a subset of the data.  You may add multiple filters:")
-        for i,f in enumerate(filter_list):
+        for i,f in enumerate(remaining_filter_list):
             print("\t%d) %s" % ((i+1), f.get_name()))
-        print("\t%d) Done adding filters" % (len(filter_list)+1))
+        print("\t%d) Done adding filters" % (len(remaining_filter_list)+1))
         filt_choice = input("Which filter would you like to add next? ")
-        filt_choice_int = validate_input(filt_choice, len(filter_list)+1)
+        filt_choice_int = validate_input(filt_choice, len(remaining_filter_list)+1)
         if (filt_choice_int>0):
-            if filt_choice_int==len(filter_list)+1:
+            if filt_choice_int==len(remaining_filter_list)+1:
                 #Then we've chosen the 'done adding filters' option
                 break
-            selected_filt = filter_list[filt_choice_int-1]
+            selected_filt = remaining_filter_list[filt_choice_int-1]
             if selected_filt in selected_filters:
                 print("You've already selected the %s filter." % selected_filt.get_name())
                 continue
             #Need to ask user for the filter value.
             selected_filt = choose_filter_value(selected_filt)
             selected_filters.append(selected_filt)
+            remaining_filter_list.remove(selected_filt)
             continue
     print("You have selected the following filters:")
     if len(selected_filters)==0:

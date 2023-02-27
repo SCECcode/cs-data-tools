@@ -4,7 +4,16 @@
 
 import sys
 import os
+
 from enum import IntEnum
+
+#Add one directory level above to path to find imports
+full_path = os.path.abspath(sys.argv[0])
+path_add = os.path.dirname(os.path.dirname(full_path))
+sys.path.append(path_add)
+
+import utils
+
 
 #Enum class to describe how the user wants to specify the filter values
 #Basically, how to interpret and apply the values in the values list
@@ -40,12 +49,14 @@ class Filter:
 		self.values.clear()
 		self.values.append(value)
 		self.filter_params = FilterParams.SINGLE_VALUE
+		return 0
 
 	def set_values(self, values):
 		self.values.clear()
 		for v in values:
 			self.values.append(v)
 		self.filter_params = FilterParams.MULTIPLE_VALUES
+		return 0
 
 	def set_value_range(self, min, max):
 		#This only makes sense if the filter is a numerical datatype
@@ -72,10 +83,16 @@ class Filter:
 	def get_type(self):
 		return self.type
 
-	#Return a printable string describing the filter.
+	#Return a printable string describing the filter + values.
 	def get_filter_string(self):
-		pass
-
+		pretty_string = "%s" % self.name
+		if self.filter_params==FilterParams.SINGLE_VALUE:
+			pretty_string = "%s: %s" % (pretty_string, self.values[0])
+		elif self.filter_params==FilterParams.MULTIPLE_VALUES:
+			pretty_string = "%s: %s" % (pretty_string, ','.join([str(v) for v in self.values]))
+		elif self.filter_params==FilterParams.VALUE_RANGE:
+			pretty_string = "%s: [%s:%s]" % (pretty_string, self.values[0], self.values[1])
+		return pretty_string
 
 
 #Class for a filter which has a preset list of possible values
@@ -114,10 +131,22 @@ class RangeFilter(Filter):
 
 	def set_value(self, value):
 		if value<self.min or value>self.max:
-			print("Filter %s can only take values [%s, %s]" % (self.name, str(self.min), str(self.max)))
-			return -1
-		super().set_value(value)
-		return 0
+			print("The %s filter can only take values [%s, %s]." % (self.name, str(self.min), str(self.max)))
+			return utils.ExitCodes.VALUE_OUT_OF_RANGE
+		return super().set_value(value)
+	
+	def set_values(self, values):
+		for v in values:
+			if v<self.min or v>self.max:
+				print("The %s filter can only take values [%s, %s]." % (self.name, str(self.min), str(self.max)))
+				return utils.ExitCodes.VALUE_OUT_OF_RANGE
+		return super().set_values(values)
+	
+	def set_value_range(self, min, max):
+		if min<self.min or max>self.max:
+			print("The %s filter can only take values [%s, %s]." % (self.name, str(self.min), str(self.max)))
+			return utils.ExitCodes.VALUE_OUT_OF_RANGE
+		return super().set_value_range(min, max)
 		
 
 def create_filters():
@@ -126,9 +155,16 @@ def create_filters():
 	mag_filter = RangeFilter('Magnitude', filt_type=float)
 	mag_filter.set_range(min=5.0, max=8.5)
 	filters.append(mag_filter)
-	#IM values
-	im_filter = EnumeratedFilter('Intensity Measure Type', filt_type=str)
-	im_filter.set_values_list(['RotD50', 'RotD100', 'PGV'])
-	filters.append(im_filter)
+	#IM type
+	im_type_filter = EnumeratedFilter('Intensity Measure Type', filt_type=str)
+	im_type_filter.set_values_list(['RotD50', 'RotD100', 'PGV'])
+	filters.append(im_type_filter)
+	#IM value
+	im_value_filter = Filter('Intensity Measure Value', filt_type=float)
+	filters.append(im_value_filter)
+	#Sites
+	sites_filter = EnumeratedFilter('Site Name', filt_type=str)
+	#
+	#
 	return filters
 
