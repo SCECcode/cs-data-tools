@@ -1,0 +1,214 @@
+#!/usr/bin/env python3
+
+'''Class to hold details about a particular possible filter.'''
+
+import sys
+import os
+import json
+
+from enum import IntEnum
+
+#Add one directory level above to path to find imports
+full_path = os.path.abspath(sys.argv[0])
+path_add = os.path.dirname(os.path.dirname(full_path))
+sys.path.append(path_add)
+
+import utils.utilities as utilities
+
+
+#Enum class to describe how the user wants to specify the filter values
+#Basically, how to interpret and apply the values in the values list
+class FilterParams(IntEnum):
+	SINGLE_VALUE = 1
+	MULTIPLE_VALUES = 2
+	VALUE_RANGE = 3
+
+	def get_text(fp):
+		if fp==FilterParams.SINGLE_VALUE:
+			return "single value"
+		elif fp==FilterParams.MULTIPLE_VALUES:
+			return "multiple values"
+		elif fp==FilterParams.VALUE_RANGE:
+			return "range of values"
+		else:
+			return "Error parsing %s into FilterParam." % str(fp)
+
+#Base class for a filter
+class Filter:
+
+	#filt_type is datatype of filter
+	def __init__(self, name, filt_type=None, help_string=""):
+		self.name = name
+		self.type = filt_type
+		self.values = []
+		self.filter_params = FilterParams.SINGLE_VALUE
+		self.query_field = ""
+		self.help_string = help_string
+
+	def get_name(self):
+		return self.name
+
+	def get_help_string(self):
+		return self.help_string
+
+	#The joins required to select on this filter
+	def set_query_field(self, query_field):
+		self.query_field = query_field
+
+	def set_value(self, value):
+		self.values.clear()
+		self.values.append(value)
+		self.filter_params = FilterParams.SINGLE_VALUE
+		return 0
+
+	def set_values(self, values):
+		self.values.clear()
+		for v in values:
+			self.values.append(v)
+		self.filter_params = FilterParams.MULTIPLE_VALUES
+		return 0
+
+	def set_value_range(self, min, max):
+		#This only makes sense if the filter is a numerical datatype
+		#(We don't have any sensical complex numbers in the CS filters)
+		if self.is_numeric()==False:
+			print("You can't specify a range for a filter which is type %s." % (str(self.get_type())))
+			return -1
+		if min>max:
+			print("Maximum value %s needs to be greater than or equal to the minimum value %s." % (str(max), str(min)))
+			return -2
+		self.values.clear()
+		self.values.append(min)
+		self.values.append(max)
+		self.filter_params = FilterParams.VALUE_RANGE
+		return 0
+
+	#Is the type of this filter a number?
+	def is_numeric(self):
+		if self.get_type()==float or self.get_type()==int:
+			return True
+		else:
+			return False
+
+	def get_type(self):
+		return self.type
+
+	#Returns a dict() representation of this object, to use for JSON serialization
+	def get_dict_representation(self):
+		#Need to store name so we can find it later, plus user-specified values
+		obj_dict = dict()
+		obj_dict['name'] = self.name
+		obj_dict['filter_params'] = self.filter_params
+		obj_dict['values'] = self.values
+		return obj_dict
+
+
+	#Return a printable string describing the filter + values.
+	def get_filter_string(self):
+		pretty_string = "%s" % self.name
+		if self.filter_params==FilterParams.SINGLE_VALUE:
+			pretty_string = "%s: %s" % (pretty_string, self.values[0])
+		elif self.filter_params==FilterParams.MULTIPLE_VALUES:
+			pretty_string = "%s: %s" % (pretty_string, ','.join([str(v) for v in self.values]))
+		elif self.filter_params==FilterParams.VALUE_RANGE:
+			pretty_string = "%s: [%s,%s]" % (pretty_string, self.values[0], self.values[1])
+		return pretty_string
+
+
+#Class for a filter which has a preset list of possible values - checks user input
+class EnumeratedFilter(Filter):
+	
+	def __init__(self, name, filt_type=None, values_list=None, help_string=""):
+		super().__init__(name, filt_type=filt_type, help_string=help_string)
+		self.values_list = values_list
+
+	def set_values_list(self, values_list=None):
+		self.values_list = values_list
+
+	def set_value(self, value):
+		if value not in self.values_list:
+			print("%s isn't a possible value for the %s filter." % (value, self.name))
+			return -1
+		super().set_value(value)
+		return 0
+	
+	def get_help_string(self):
+		help_str = "%s  Possible values:" % super().get_help_string()
+		if self.values_list is not None:
+			values_str = ', '.join([str(v) for v in self.values_list])
+			help_str = "%s %s" % (help_str, values_str)
+		return help_str
+			
+
+
+#Class for a filter which has a range of possible values - checks user input
+class RangeFilter(Filter):
+
+	def __init__(self, name, filt_type=None, min=None, max=None, help_string=""):
+		super().__init__(name, filt_type=filt_type, help_string=help_string)
+		self.min = min
+		self.max = max
+		self.value = None
+
+	def set_range(self, min=None, max=None):
+		self.min = min
+		self.max = max
+
+	def get_range(self):
+		return (self.min, self.max)
+
+	def set_value(self, value):
+		if value<self.min or value>self.max:
+			print("The %s filter can only take values [%s, %s]." % (self.name, str(self.min), str(self.max)))
+			return utilities.ExitCodes.VALUE_OUT_OF_RANGE
+		return super().set_value(value)
+	
+	def set_values(self, values):
+		for v in values:
+			if v<self.min or v>self.max:
+				print("The %s filter can only take values [%s, %s]." % (self.name, str(self.min), str(self.max)))
+				return utilities.ExitCodes.VALUE_OUT_OF_RANGE
+		return super().set_values(values)
+	
+	def set_value_range(self, min, max):
+		if min<self.min or max>self.max:
+			print("The %s filter can only take values [%s, %s]." % (self.name, str(self.min), str(self.max)))
+			return utilities.ExitCodes.VALUE_OUT_OF_RANGE
+		return super().set_value_range(min, max)
+	
+
+def create_filters():
+	filters = []
+	#IM type
+	im_type_filter = EnumeratedFilter('Intensity Measure Type', filt_type=str, help_string="Type of intensity measure.")
+	im_type_filter.set_values_list(['RotD50', 'RotD100', 'PGV'])
+	filters.append(im_type_filter)
+	#IM value
+	im_value_filter = Filter('Intensity Measure Value', filt_type=float, help_string="Value of intensity measure, in cm/s2 for accelerations and cm/s for velocities.")
+	filters.append(im_value_filter)
+	#Magnitude
+	mag_filter = RangeFilter('Magnitude', filt_type=float, help_string="Magnitude of the earthquake.")
+	mag_filter.set_range(min=5.0, max=8.5)
+	mag_filter.set_query_field("Rupture.Magnitude")
+	filters.append(mag_filter)
+	#Sites
+	sites_filter = EnumeratedFilter('Site Name', filt_type=str, help_string="3-5 character site name.")
+	sites_filter.set_query_field("CyberShake_Sites.CS_Short_Name")
+	filters.append(sites_filter)
+	#Site-Rupture dist
+	site_rup_dist_filter = RangeFilter('Site-Rupture Distance', filt_type=float, help_string="Site-rupture distance, which is determined by calculating the distance between the site and each point on the rupture surface and taking the minimum.")
+	site_rup_dist_filter.set_range(min=0.0, max=200.0)
+	filters.append(site_rup_dist_filter)
+	#Probability
+	prob_filter = RangeFilter('Rupture Probability', filt_type=float, help_string="The probability of the rupture occuring, as specified by the ERF.  Note that if the rupture has multiple rupture variations, this probability will be distributed among the rupture variations.")
+	prob_filter.set_range(min=0.0, max=1.0)
+	filters.append(prob_filter)
+	#Source name
+	source_name_filter = Filter('Source Name', filt_type=str, help_string="Name of the source.  Any sources which contain this string will be selected.")
+	filters.append(source_name_filter)
+	#Study
+	study_filter = EnumeratedFilter('Study Name', filt_type=str, help_string="Study to select data from.")
+	study_filter.set_values_list(['Study 15.4', 'Study 15.12', 'Study 17.3', 'Study 18.8', 'Study 21.12', 'Study 22.12'])
+	filters.append(study_filter)
+	return filters
+
