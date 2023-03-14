@@ -3,8 +3,13 @@
 import sys
 import os
 
-import data_products
-import filters
+#Add one directory level above to path to find imports
+full_path = os.path.abspath(sys.argv[0])
+path_add = os.path.dirname(os.path.dirname(full_path))
+sys.path.append(path_add)
+
+import utils.data_products as data_products
+import utils.filters as filters
 
 #Will return a negative number if the input is not valid
 #Otherwise, returns int with value
@@ -36,17 +41,18 @@ def choose_data_product(dp_list):
 
 
 def choose_filter_value(filter):
-    print("What value(s) do you want to use for the %s filter?" % (filter.get_name()))
-    print("%d) Specify single value." % filters.FilterParams.SINGLE_VALUE)
-    print("%d) Specify multiple values." % filters.FilterParams.MULTIPLE_VALUES)
-    max_filter_val = filters.FilterParams.MULTIPLE_VALUES
-    if filter.is_numeric():
-        print("%d) Specify a range of values." % filters.FilterParams.VALUE_RANGE)
-        max_filter_val = filters.FilterParams.VALUE_RANGE
-    value_type_choice = input("How do you want to specify filter values? ")
-    value_type_choice_int = validate_input(value_type_choice, max_filter_val)
-    #Import builtins so we can instantiate the value objects appropriately
-    #Assume Python3
+    while True:
+        print("What value(s) do you want to use for the %s filter?" % (filter.get_name()))
+        print("%d) Specify single value." % filters.FilterParams.SINGLE_VALUE)
+        print("%d) Specify multiple values." % filters.FilterParams.MULTIPLE_VALUES)
+        max_filter_val = filters.FilterParams.MULTIPLE_VALUES
+        if filter.is_numeric():
+            print("%d) Specify a range of values." % filters.FilterParams.VALUE_RANGE)
+            max_filter_val = filters.FilterParams.VALUE_RANGE
+        value_type_choice = input("How do you want to specify filter values? ")
+        value_type_choice_int = validate_input(value_type_choice, max_filter_val)
+        if value_type_choice_int>=0:
+            break
     if value_type_choice_int==filters.FilterParams.SINGLE_VALUE:
         while True:
             value = input("What value do you want to use? ")
@@ -133,5 +139,6 @@ def get_user_input(dp_list, filter_list):
     selected_dp = choose_data_product(dp_list)
     #Filter(s)
     selected_filters = choose_filters(filter_list)
+    return (selected_dp, selected_filters)
     
 
