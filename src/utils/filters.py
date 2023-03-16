@@ -42,7 +42,8 @@ class Filter:
 		self.type = filt_type
 		self.values = []
 		self.filter_params = FilterParams.SINGLE_VALUE
-		self.query_field = ""
+		self.where_fields = []
+		self.from_tables = []
 		self.help_string = help_string
 
 	def get_name(self):
@@ -51,15 +52,28 @@ class Filter:
 	def get_help_string(self):
 		return self.help_string
 
+	def get_filter_params(self):
+		return self.filter_params
+
 	#The joins required to select on this filter
-	def set_query_field(self, query_field):
-		self.query_field = query_field
+	def set_query(self, fields=[], tables=[]):
+		self.where_fields.extend(fields)
+		self.from_tables.extend(tables)
+
+	def get_query(self):
+		return (self.where_fields, self.from_tables)
 
 	def set_value(self, value):
 		self.values.clear()
 		self.values.append(value)
 		self.filter_params = FilterParams.SINGLE_VALUE
 		return 0
+
+	def get_values(self):
+		return self.values
+
+	def get_value(self):
+		return self.values[0]
 
 	def set_values(self, values):
 		self.values.clear()
@@ -189,23 +203,23 @@ def create_filters():
 	#Magnitude
 	mag_filter = RangeFilter('Magnitude', filt_type=float, help_string="Magnitude of the earthquake.")
 	mag_filter.set_range(min=5.0, max=8.5)
-	mag_filter.set_query_field("Rupture.Magnitude")
+	mag_filter.set_query(fields=["Ruptures.Magnitude"], tables=['Ruptures'])
 	filters.append(mag_filter)
 	#Sites
 	sites_filter = EnumeratedFilter('Site Name', filt_type=str, help_string="3-5 character site name.")
-	sites_filter.set_query_field("CyberShake_Sites.CS_Short_Name")
+	sites_filter.set_query(fields=["CyberShake_Sites.CS_Short_Name"], tables=['CyberShake_Sites'])
 	filters.append(sites_filter)
 	#Site-Rupture dist
-	site_rup_dist_filter = RangeFilter('Site-Rupture Distance', filt_type=float, help_string="Site-rupture distance, which is determined by calculating the distance between the site and each point on the rupture surface and taking the minimum.")
-	site_rup_dist_filter.set_range(min=0.0, max=200.0)
-	filters.append(site_rup_dist_filter)
+	#site_rup_dist_filter = RangeFilter('Site-Rupture Distance', filt_type=float, help_string="Site-rupture distance, which is determined by calculating the distance between the site and each point on the rupture surface and taking the minimum.")
+	#site_rup_dist_filter.set_range(min=0.0, max=200.0)
+	#filters.append(site_rup_dist_filter)
 	#Probability
-	prob_filter = RangeFilter('Rupture Probability', filt_type=float, help_string="The probability of the rupture occuring, as specified by the ERF.  Note that if the rupture has multiple rupture variations, this probability will be distributed among the rupture variations.")
-	prob_filter.set_range(min=0.0, max=1.0)
-	filters.append(prob_filter)
+	#prob_filter = RangeFilter('Rupture Probability', filt_type=float, help_string="The probability of the rupture occuring, as specified by the ERF.  Note that if the rupture has multiple rupture variations, this probability will be distributed among the rupture variations.")
+	#prob_filter.set_range(min=0.0, max=1.0)
+	#filters.append(prob_filter)
 	#Source name
-	source_name_filter = Filter('Source Name', filt_type=str, help_string="Name of the source.  Any sources which contain this string will be selected.")
-	filters.append(source_name_filter)
+	#source_name_filter = Filter('Source Name', filt_type=str, help_string="Name of the source.  Any sources which contain this string will be selected.")
+	#filters.append(source_name_filter)
 	#Study
 	study_filter = EnumeratedFilter('Study Name', filt_type=str, help_string="Study to select data from.")
 	study_filter.set_values_list(['Study 15.4', 'Study 15.12', 'Study 17.3', 'Study 18.8', 'Study 21.12', 'Study 22.12'])

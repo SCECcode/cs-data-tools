@@ -11,6 +11,15 @@
                 "kind": "build",
                 "isDefault": true
             }
+        },
+        {
+            "label": "run_query_builder",
+            "type": "shell",
+            "command": "python3.8 /home/scott/git/cs-data-tools/src/query_build/run_query_builder.py -i csdatarequest.145629_06032023.json",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
         }
     ]
 }
