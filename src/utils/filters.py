@@ -16,6 +16,24 @@ sys.path.append(path_add)
 import utils.utilities as utilities
 
 
+#Enum class to specify what the filter is filtering on - IMs, events, or sites?
+#This way, after the user selects the data product, we can just present relevant filters.
+class FilterDataProducts(IntEnum):
+	EVENTS = 1
+	SITES = 2
+	IMS = 3
+
+	def get_text(fp):
+		if fp==FilterDataProducts.EVENTS:
+			return "events"
+		elif fp==FilterDataProducts.SITES:
+			return "sites"
+		elif fp==FilterDataProducts.IMS:
+			return "IMs"
+		else:
+			return "Error parsing %s into FilterDataProduct." % str(fp)
+	
+
 #Enum class to describe how the user wants to specify the filter values
 #Basically, how to interpret and apply the values in the values list
 class FilterParams(IntEnum):
@@ -37,14 +55,16 @@ class FilterParams(IntEnum):
 class Filter:
 
 	#filt_type is datatype of filter
-	def __init__(self, name, filt_type=None, help_string=""):
+	def __init__(self, name, filt_type=None, data_product=None, help_string=""):
 		self.name = name
 		self.type = filt_type
 		self.values = []
 		self.filter_params = FilterParams.SINGLE_VALUE
 		self.where_fields = []
 		self.from_tables = []
+		self.data_product = data_product
 		self.help_string = help_string
+
 
 	def get_name(self):
 		return self.name
@@ -107,6 +127,9 @@ class Filter:
 	def get_type(self):
 		return self.type
 
+	def get_data_product(self):
+		return self.data_product
+
 	#Returns a dict() representation of this object, to use for JSON serialization
 	def get_dict_representation(self):
 		#Need to store name so we can find it later, plus user-specified values
@@ -132,8 +155,8 @@ class Filter:
 #Class for a filter which has a preset list of possible values - checks user input
 class EnumeratedFilter(Filter):
 	
-	def __init__(self, name, filt_type=None, values_list=None, help_string=""):
-		super().__init__(name, filt_type=filt_type, help_string=help_string)
+	def __init__(self, name, filt_type=None, values_list=None, data_product=None, help_string=""):
+		super().__init__(name, filt_type=filt_type, data_product=data_product, help_string=help_string)
 		self.values_list = values_list
 
 	def set_values_list(self, values_list=None):
@@ -146,6 +169,9 @@ class EnumeratedFilter(Filter):
 		super().set_value(value)
 		return 0
 	
+	def get_values_list(self):
+		return self.values_list
+
 	def get_help_string(self):
 		help_str = "%s  Possible values:" % super().get_help_string()
 		if self.values_list is not None:
@@ -158,8 +184,8 @@ class EnumeratedFilter(Filter):
 #Class for a filter which has a range of possible values - checks user input
 class RangeFilter(Filter):
 
-	def __init__(self, name, filt_type=None, min=None, max=None, help_string=""):
-		super().__init__(name, filt_type=filt_type, help_string=help_string)
+	def __init__(self, name, filt_type=None, min=-1e99, max=1e99, data_product=None, help_string=""):
+		super().__init__(name, filt_type=filt_type, data_product=data_product, help_string=help_string)
 		self.min = min
 		self.max = max
 		self.value = None
@@ -194,19 +220,22 @@ class RangeFilter(Filter):
 def create_filters():
 	filters = []
 	#IM type
-	im_type_filter = EnumeratedFilter('Intensity Measure Type', filt_type=str, help_string="Type of intensity measure.")
-	im_type_filter.set_values_list(['RotD50', 'RotD100', 'PGV'])
+	im_type_filter = EnumeratedFilter('Intensity Measure Period', filt_type=float, data_product=FilterDataProducts.IMS, help_string="Type of intensity measure.")
+	im_type_filter.set_values_list([2.0, 3.0, 4.0, 5.0, 7.5, 10.0])
+	im_type_filter.set_query(fields=["IM_Types.IM_Type_Value"], tables=["IM_Types"])
 	filters.append(im_type_filter)
 	#IM value
-	im_value_filter = Filter('Intensity Measure Value', filt_type=float, help_string="Value of intensity measure, in cm/s2 for accelerations and cm/s for velocities.")
+	im_value_filter = Filter('Intensity Measure Value', filt_type=float, data_product=FilterDataProducts.IMS, help_string="Value of intensity measure, in cm/s2 for accelerations and cm/s for velocities.")
+	im_value_filter.set_query(fields=["PeakAmplitudes.IM_Value"], tables=["PeakAmplitudes"])
 	filters.append(im_value_filter)
 	#Magnitude
-	mag_filter = RangeFilter('Magnitude', filt_type=float, help_string="Magnitude of the earthquake.")
+	mag_filter = RangeFilter('Magnitude', filt_type=float, data_product=FilterDataProducts.EVENTS, help_string="Magnitude of the earthquake.")
 	mag_filter.set_range(min=5.0, max=8.5)
-	mag_filter.set_query(fields=["Ruptures.Magnitude"], tables=['Ruptures'])
+	mag_filter.set_query(fields=["Ruptures.Mag"], tables=['Ruptures'])
 	filters.append(mag_filter)
 	#Sites
-	sites_filter = EnumeratedFilter('Site Name', filt_type=str, help_string="3-5 character site name.")
+	sites_filter = EnumeratedFilter('Site Name', filt_type=str, data_product=FilterDataProducts.SITES, help_string="3-5 character site name.")
+	sites_filter.set_values_list(["USC", "PAS", "WNGC", "STNI"])
 	sites_filter.set_query(fields=["CyberShake_Sites.CS_Short_Name"], tables=['CyberShake_Sites'])
 	filters.append(sites_filter)
 	#Site-Rupture dist
@@ -221,8 +250,9 @@ def create_filters():
 	#source_name_filter = Filter('Source Name', filt_type=str, help_string="Name of the source.  Any sources which contain this string will be selected.")
 	#filters.append(source_name_filter)
 	#Study
-	study_filter = EnumeratedFilter('Study Name', filt_type=str, help_string="Study to select data from.")
+	study_filter = EnumeratedFilter('Study Name', filt_type=str, data_product=FilterDataProducts.SITES, help_string="Study to select data from.")
 	study_filter.set_values_list(['Study 15.4', 'Study 15.12', 'Study 17.3', 'Study 18.8', 'Study 21.12', 'Study 22.12'])
+	study_filter.set_query(fields=["Studies.Study_Name"], tables=["Studies"])
 	filters.append(study_filter)
 	return filters
 

@@ -42,16 +42,36 @@ def choose_data_product(dp_list):
 
 def choose_filter_value(filter):
     while True:
-        print("What value(s) do you want to use for the %s filter?" % (filter.get_name()))
+        print("How do you want to specify value(s) for the %s filter?" % (filter.get_name()))
         print("%d) Specify single value." % filters.FilterParams.SINGLE_VALUE)
         print("%d) Specify multiple values." % filters.FilterParams.MULTIPLE_VALUES)
         max_filter_val = filters.FilterParams.MULTIPLE_VALUES
         if filter.is_numeric():
             print("%d) Specify a range of values." % filters.FilterParams.VALUE_RANGE)
             max_filter_val = filters.FilterParams.VALUE_RANGE
+        max_filter_val += 1
+        print("%d) Show valid values for this filter." % (max_filter_val))
         value_type_choice = input("How do you want to specify filter values? ")
         value_type_choice_int = validate_input(value_type_choice, max_filter_val)
-        if value_type_choice_int>=0:
+        if value_type_choice_int==max_filter_val:
+            #Print valid values
+            try:
+                #RangeFilter?
+                (min_val, max_val) = filter.get_range()
+                print("Valid values are [%f, %f]." % (min_val, max_val))
+                continue
+            except:
+                pass
+            try:
+                #EnumeratedFilter?
+                vals_list = filter.get_values_list()
+                print("Valid values are %s" % ', '.join([str(v) for v in vals_list]))
+                continue
+            except:
+                pass
+            print("No restrictions on values.")
+            continue
+        elif value_type_choice_int>=0:
             break
     if value_type_choice_int==filters.FilterParams.SINGLE_VALUE:
         while True:
@@ -96,14 +116,31 @@ def choose_filter_value(filter):
             if filter.set_value_range(min_obj, max_obj)!=0:
                 continue
             break
+    else:
+        #Print valid values
+        try:
+            #RangeFilter?
+            (min_val, max_val) = filter.get_range()
+            print("Valid values are [%f, %f]." % (min_val, max_val))
+        except:
+            pass
+        try:
+            #EnumeratedFilter?
+            vals_list = filter.get_values_list()
+            print("Valid values are %s" % ', '.join([str(v) for v in vals_list]))
+        except:
+            pass
+
     return filter
 
 
-def choose_filters(filter_list):
+def choose_filters(filter_list, selected_dp):
     selected_filters = []
     remaining_filter_list = []
+    filter_dps = selected_dp.get_relevant_filters()
     for f in filter_list:
-        remaining_filter_list.append(f)
+        if f.get_data_product() in filter_dps:
+            remaining_filter_list.append(f)
     while True:
         print("These are the available filters you can use to get a subset of the data.  You may add multiple filters:")
         for i,f in enumerate(remaining_filter_list):
@@ -138,7 +175,7 @@ def get_user_input(dp_list, filter_list):
     #Data product
     selected_dp = choose_data_product(dp_list)
     #Filter(s)
-    selected_filters = choose_filters(filter_list)
+    selected_filters = choose_filters(filter_list, selected_dp)
     return (selected_dp, selected_filters)
     
 
