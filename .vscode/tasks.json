@@ -20,6 +20,15 @@
                 "kind": "build",
                 "isDefault": true
             }
+        },
+        {
+            "label": "run_database_wrapper",
+            "type": "shell",
+            "command": "python3.8 /home/scott/git/cs-data-tools/src/db_wrapper/run_database_wrapper.py -i csdatarequest.Seis.query -o csdatarequest.Seis.data -c /home/scott/git/cs-data-tools/src/db_wrapper/focal.cfg",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
         }
     ]
 } 

@@ -4,6 +4,7 @@ import sys
 import os
 import argparse
 import json
+import datetime
 
 import query_constructor
 
@@ -22,12 +23,18 @@ filter_list = None
 def parse_args():
     parser = argparse.ArgumentParser(prog='Query Builder', description='Takes CyberShake data request and constructs database queries required to fulfill it.')
     parser.add_argument('-i', '--input-filename', dest='input_filename', action='store', default=None, help="Path to JSON file describing the data request.")
+    parser.add_argument('-o', '--output-filename', dest='output_filename', action='store', default=None, help="Path to output file containing queries.")
     args = parser.parse_args()
     if args.input_filename is None:
-         print("Path to input file must be provided, aborting.", file=sys.stderr)
-         sys.exit(utilities.ExitCodes.MISSING_ARGUMENTS)
+        print("Path to input file must be provided, aborting.", file=sys.stderr)
+        sys.exit(utilities.ExitCodes.MISSING_ARGUMENTS)
     input_filename = args.input_filename
-    return input_filename
+    if args.output_filename is None:
+        dt_tuple = datetime.datetime.now().timetuple()
+        output_filename = "csdatarequest.%02d%02d%02d_%02d%02d%04d.query" % (dt_tuple.tm_hour, dt_tuple.tm_min, dt_tuple.tm_sec, dt_tuple.tm_mday, dt_tuple.tm_mon, dt_tuple.tm_year)
+    else:
+        output_filename - args.output_filename
+    return (input_filename, output_filename)
 	
 def load_data():
 	global dp_list, filter_list
@@ -44,8 +51,9 @@ def parse_json(input_filename):
     try:
           fp_in = open(input_filename, 'r')
           json_dict = json.load(fp_in)
-    except:
+    except Exception as e:
           print("Error parsing JSON file %s, aborting." % input_filename)
+          print(e)
           sys.exit(utilities.ExitCodes.FILE_PARSING_ERROR)
     dp_name = json_dict['products']['name']
     dp_selected = None
@@ -82,18 +90,25 @@ def parse_json(input_filename):
           sys.exit(utilities.ExitCodes.FILE_PARSING_ERROR)
     return (dp_selected, filters_selected)
 
-def write_queries(query):
-    pass
+def write_queries(query, input_filename, output_filename, dp_name):
+    with open(output_filename, 'w') as fp_out:
+        fp_out.write("select = %s\n" % query.get_select_string())
+        fp_out.write("from = %s\n" % query.get_from_string())
+        fp_out.write("where = %s\n" % query.get_where_string())
+        fp_out.write("data_request_file = %s\n" % input_filename)
+        fp_out.write("data_product = %s\n" % dp_name)
+        fp_out.flush()
+        fp_out.close()
 
 def run_main():
-    input_filename = parse_args()
+    (input_filename, output_filename) = parse_args()
     load_data()
     (dp_selected, filters_selected) = parse_json(input_filename)
     print(dp_selected.get_name())
     print([f.get_name() for f in filters_selected])
     query = query_constructor.construct_queries(dp_selected, filters_selected)
     print(query.get_query_string())
-    write_queries(query)
+    write_queries(query, input_filename, output_filename, dp_selected.get_name())
 
 if __name__=="__main__":
-	run_main()
+	run_main() 

@@ -13,7 +13,22 @@ import utils.data_products as data_products
 
 
 class Query:
-     
+    sort_order = ['Study_Name',
+                  'Run_ID', 
+                    'CS_Short_Name', 
+                    'CS_Site_Lon',
+                    'CS_Site_Lat',
+                    'Source_ID',
+                    'Rupture_ID',
+                    'Rup_Var_ID',
+                    'Source_Name',
+                    'Mag',
+                    'Prob',
+                    'IM_Type_Value',
+                    'IM_Type_Component',
+                    'IM_Value',
+                    'Units']
+
     def __init__(self):
         self.select_fields = set()
         self.from_tables = set()
@@ -31,8 +46,33 @@ class Query:
         for w in where_fields:
             self.where_clauses.add(w)
 
+    def get_select_string(self):
+        #Use the sorted version
+        return ",".join(self.sort_select())
+    
+    def get_from_string(self):
+        return ",".join(list(self.from_tables))
+    
+    def get_where_string(self):
+        return " and ".join(list(self.where_clauses))
+
     def get_query_string(self):
-        return "select %s from %s where %s" % (",".join(list(self.select_fields)), ",".join(list(self.from_tables)), " and ".join(list(self.where_clauses)))
+        return "select %s from %s where %s" % (self.get_select_string(), self.get_from_string(), self.get_where_string())
+
+    #Sorts the select fields into preference order, returns list
+    def sort_select(self):
+        sorted_select_fields = []
+        select_fields_list = list(self.select_fields)
+        for f in self.sort_order:
+            for s in select_fields_list:
+                #Match on suffix - don't care which table it comes from
+                if f==s.split(".")[1]:
+                    sorted_select_fields.append(s)
+        #Add the rest to the end:
+        for s in select_fields_list:
+            if s not in sorted_select_fields:
+                sorted_select_fields.append(s)
+        return sorted_select_fields
 
     #Makes sure all tables are connected with joins
     def connect_tables(self):
@@ -108,9 +148,14 @@ def construct_queries(dp, filter_list):
     (select_fields, from_tables) = dp.get_query()
     query.add_select(select_fields)
     query.add_from(from_tables)
+    #Add metadata tables
+    (metadata_select, metadata_from) = dp.get_metadata_query()
+    query.add_select(metadata_select)
+    query.add_from(metadata_from)
     #If we're retrieving IM values, restrict to RotD50
-    query.add_from(["IM_Types"])
-    query.add_where(["IM_Types.IM_Type_Component='RotD50'"])
+    if filters.FilterDataProducts.IMS in dp.get_relevant_filters():
+        query.add_from(["IM_Types"])
+        query.add_where(["IM_Types.IM_Type_Component='RotD50'"])
     for f in filter_list:
         print(query.get_query_string())
         (where_fields, from_tables) = f.get_query()

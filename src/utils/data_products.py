@@ -50,6 +50,9 @@ class DataProducts:
         self.metadata_select_fields.extend(fields)
         self.metadata_from_tables.extend(tables)
 
+    def get_metadata_query(self):
+        return (self.metadata_select_fields, self.metadata_from_tables)
+
 def create_data_products():
     dp_list = []
     #Sites
@@ -59,13 +62,13 @@ def create_data_products():
     dp_list.append(dp_sites)
     #Seismograms
     dp_seismograms = DataProducts('Seismograms', requires_file=True, relevant_filters=[filters.FilterDataProducts.SITES, filters.FilterDataProducts.EVENTS, filters.FilterDataProducts.IMS], help_string="Velocity seismogram files.")
-    dp_seismograms.set_query(fields=["CyberShake_Runs.Run_ID", "CyberShake_Sites.CS_Short_Name", "CyberShake_Site_Ruptures.Source_ID", "CyberShake_Site_Ruptures.Rupture_ID", "Rupture_Variations.Rup_Var_ID"], tables=["CyberShake_Runs", "CyberShake_Sites", "CyberShake_Site_Ruptures", "Rupture_Variations"])
-    dp_seismograms.set_metadata_select("select CyberShake_Sites.CS_Short_Name, CyberShake_Runs.Run_ID, Rupture_Variations.Source_ID, Rupture_Variations.Rupture_ID, Rupture_Variations.Rup_Var_ID")
+    dp_seismograms.set_query(fields=["CyberShake_Runs.Run_ID", "CyberShake_Sites.CS_Short_Name", "CyberShake_Site_Ruptures.Source_ID", "CyberShake_Site_Ruptures.Rupture_ID", "Rupture_Variations.Rup_Var_ID", "Studies.Study_Name"], tables=["CyberShake_Runs", "CyberShake_Sites", "CyberShake_Site_Ruptures", "Rupture_Variations", "Studies"])
+    dp_seismograms.set_metadata_query(fields=["CyberShake_Sites.CS_Short_Name", "CyberShake_Runs.Run_ID", "Ruptures.Mag", "Ruptures.Prob", "Ruptures.Source_Name"], tables=["CyberShake_Sites", "CyberShake_Runs", "Ruptures"])
     dp_list.append(dp_seismograms)
     #IMs
     dp_intensity_measures = DataProducts('Intensity Measures', requires_file=False, relevant_filters=[filters.FilterDataProducts.SITES, filters.FilterDataProducts.EVENTS, filters.FilterDataProducts.IMS], help_string="Intensity measure data.")
     dp_intensity_measures.set_query(fields=["PeakAmplitudes.IM_Value"], tables=["PeakAmplitudes"])
-    dp_intensity_measures.set_metadata_query(fields=["PeakAmplitudes.Run_ID", "PeakAmplitudes.Source_ID", "PeakAmplitudes.Rupture_ID", "PeakAmplitudes.Rup_Var_ID", "Ruptures.Mag", "Ruptures.Prob"], tables=["PeakAmplitudes", "Ruptures"])
+    dp_intensity_measures.set_metadata_query(fields=["CyberShake_Sites.CS_Short_Name", "PeakAmplitudes.Run_ID", "PeakAmplitudes.Source_ID", "PeakAmplitudes.Rupture_ID", "PeakAmplitudes.Rup_Var_ID", "Ruptures.Mag", "Ruptures.Prob", "Ruptures.Source_Name", "IM_Types.IM_Type_Value", "IM_Types.IM_Type_Component", "IM_Types.Units"], tables=["CyberShake_Sites", "PeakAmplitudes", "Ruptures", "IM_Types"])
     dp_list.append(dp_intensity_measures)
     #Durations
     #dp_durations = DataProducts('Durations', requires_file=False, help_string="Duration data.")
