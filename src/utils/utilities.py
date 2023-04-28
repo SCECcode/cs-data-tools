@@ -8,14 +8,15 @@ class ExitCodes:
 
     NO_DATAPRODUCTS = 1
     NO_FILTERS = 2
-    VALUE_OUT_OF_RANGE = 3
-    INVALID_ARGUMENTS = 4
-    MISSING_ARGUMENTS = 5
-    FILE_PARSING_ERROR = 6
-    BAD_FILE_PATH = 7
-    DATABASE_CONNECTION_ERROR = 8
-    DATABASE_COMMAND_ERROR = 9
-    FILE_WRITING_ERROR = 10
+    NO_MODELS = 3
+    VALUE_OUT_OF_RANGE = 4
+    INVALID_ARGUMENTS = 5
+    MISSING_ARGUMENTS = 6
+    FILE_PARSING_ERROR = 7
+    BAD_FILE_PATH = 8
+    DATABASE_CONNECTION_ERROR = 9
+    DATABASE_COMMAND_ERROR = 10
+    FILE_WRITING_ERROR = 11
 
 
 class CSJSONEncoder(json.JSONEncoder):
@@ -51,3 +52,10 @@ def get_field_alias(field):
 	else:
 		return field
 
+def get_rv_seismogram_size(study_name):
+	components = 2
+	sizeof_float = 4
+	header_size = 56
+	if study_name=='Study 15.12':
+		nt = 12000
+	return components*nt*sizeof_float + header_size

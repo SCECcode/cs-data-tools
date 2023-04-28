@@ -15,7 +15,7 @@
         {
             "label": "run_query_builder",
             "type": "shell",
-            "command": "python3.8 /home/scott/git/cs-data-tools/src/query_build/run_query_builder.py -i csdatarequest.Seis.json",
+            "command": "python3.8 /home/scott/git/cs-data-tools/src/query_build/run_query_builder.py -i csdata.231400_04272023.json",
             "group": {
                 "kind": "build",
                 "isDefault": true
@@ -24,11 +24,30 @@
         {
             "label": "run_database_wrapper",
             "type": "shell",
-            "command": "python3.8 /home/scott/git/cs-data-tools/src/db_wrapper/run_database_wrapper.py -i csdatarequest.Seis.query -o csdatarequest.Seis.data -c /home/scott/git/cs-data-tools/src/db_wrapper/focal.cfg",
+            "command": "python3.8 /home/scott/git/cs-data-tools/src/db_wrapper/run_database_wrapper.py -of csv -i csdata.231450_04272023.query -o csdata.231450_04272023.data -c /home/scott/git/cs-data-tools/src/db_wrapper/focal.cfg",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "run_data_collector",
+            "type": "shell",
+            "command": "python3.8 /home/scott/git/cs-data-tools/src/data_collector/run_data_collector.py -i csdata.231450_04272023.urls -o /tmp/rvs -t /tmp",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "retrieve_cs_data",
+            "type": "shell",
+            "command": "python3.8 /home/scott/git/cs-data-tools/src/retrieve_cs_data.py -o /tmp/rvs -t /tmp",
             "group": {
                 "kind": "build",
                 "isDefault": true
             }
         }
+
     ]
 } 

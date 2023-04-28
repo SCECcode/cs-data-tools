@@ -56,8 +56,8 @@ class DataProducts:
 def create_data_products():
     dp_list = []
     #Sites
-    dp_sites = DataProducts('Site Names', requires_file=False, relevant_filters=[filters.FilterDataProducts.SITES], help_string="List of valid site names.")
-    dp_sites.set_query(fields=["CyberShake_Sites.CS_Short_Name"], tables=["CyberShake_Sites"])
+    dp_sites = DataProducts('Site Info', requires_file=False, relevant_filters=[filters.FilterDataProducts.SITES], help_string="List of valid site names.")
+    dp_sites.set_query(fields=["CyberShake_Sites.CS_Short_Name", "CyberShake_Sites.CS_Site_Name"], tables=["CyberShake_Sites"])
     dp_sites.set_metadata_query(fields=["CyberShake_Sites.CS_Site_Lat", "CyberShake_Sites.CS_Site_Lon"], tables=["CyberShake_Sites"])
     dp_list.append(dp_sites)
     #Seismograms

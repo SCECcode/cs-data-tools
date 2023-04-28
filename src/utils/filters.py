@@ -250,9 +250,9 @@ def create_filters():
 	#source_name_filter = Filter('Source Name', filt_type=str, help_string="Name of the source.  Any sources which contain this string will be selected.")
 	#filters.append(source_name_filter)
 	#Study
-	study_filter = EnumeratedFilter('Study Name', filt_type=str, data_product=FilterDataProducts.SITES, help_string="Study to select data from.")
-	study_filter.set_values_list(['Study 15.4', 'Study 15.12', 'Study 17.3', 'Study 18.8', 'Study 21.12', 'Study 22.12'])
-	study_filter.set_query(fields=["Studies.Study_Name"], tables=["Studies"])
-	filters.append(study_filter)
+	#study_filter = EnumeratedFilter('Study Name', filt_type=str, data_product=FilterDataProducts.SITES, help_string="Study to select data from.")
+	#study_filter.set_values_list(['Study 15.4', 'Study 15.12', 'Study 17.3', 'Study 18.8', 'Study 21.12', 'Study 22.12'])
+	#study_filter.set_query(fields=["Studies.Study_Name"], tables=["Studies"])
+	#filters.append(study_filter)
 	return filters
 

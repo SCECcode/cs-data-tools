@@ -10,12 +10,13 @@ sys.path.append(path_add)
 
 import utils.filters as filters
 import utils.data_products as data_products
-
+import utils.models as models
 
 class Query:
     sort_order = ['Study_Name',
                   'Run_ID', 
-                    'CS_Short_Name', 
+                    'CS_Short_Name',
+                    'CS_Site_Name',
                     'CS_Site_Lon',
                     'CS_Site_Lat',
                     'Source_ID',
@@ -84,7 +85,7 @@ class Query:
             #Run all combos
             for t in table_list:
                 if t not in connected_list:
-                    print("Connecting %s and %s." % (working_table, t))
+                    #print("Connecting %s and %s." % (working_table, t))
                     added_tables = self.join_tables(working_table, t)
                     if len(added_tables)>0:
                         table_list.extend(added_tables)
@@ -143,8 +144,15 @@ class Query:
         return added_tables
 
 
-def construct_queries(dp, filter_list):
+def construct_queries(model, dp, filter_list):
     query = Query()
+    #Add model
+    (from_tables, where_clauses) = model.get_query()
+    query.add_from(from_tables)
+    query.add_where(where_clauses)
+    print(from_tables)
+    print(where_clauses)
+    #Add data product
     (select_fields, from_tables) = dp.get_query()
     query.add_select(select_fields)
     query.add_from(from_tables)
@@ -157,7 +165,6 @@ def construct_queries(dp, filter_list):
         query.add_from(["IM_Types"])
         query.add_where(["IM_Types.IM_Type_Component='RotD50'"])
     for f in filter_list:
-        print(query.get_query_string())
         (where_fields, from_tables) = f.get_query()
         print("Filter %s adds from tables %s and where fields %s." % (f.get_name(), from_tables, where_fields))
         query.add_from(from_tables)
@@ -177,6 +184,5 @@ def construct_queries(dp, filter_list):
             where_clause = "%s>=%s%s%s and %s<=%s%s%s" % (where_fields[0], quote, min, quote, where_fields[0], quote, max, quote)
             query.add_where([where_clause])
     #Need to join any unconnected tables
-    print(query.get_query_string())
     query.connect_tables()
     return query

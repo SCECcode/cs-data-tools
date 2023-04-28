@@ -24,6 +24,20 @@ def validate_input(user_input, max_ok_val):
         return -2
     return input_int
 
+def choose_model(model_list):
+    selected_model = None
+    while True:
+        print("These are the available CyberShake models:")
+        for i,m in enumerate(model_list):
+            print("\t%d) %s" % ((i+1), m.get_name()))
+        model_choice = input("\nWhich model do you want to use? ")
+        model_choice_int = validate_input(model_choice, len(model_list))
+        if model_choice_int>0:
+            selected_model = model_list[model_choice_int-1]
+            break
+    print("You have selected %s.\n" % (selected_model.get_name()))
+    return selected_model
+
 
 def choose_data_product(dp_list):
     selected_dp = None
@@ -31,18 +45,18 @@ def choose_data_product(dp_list):
         print("These are the available data products:")
         for i,d in enumerate(dp_list):
             print("\t%d) %s" % ((i+1), d.get_name()))
-        dp_choice = input("Which data product do you want? ")
+        dp_choice = input("\nWhich data product do you want to retrieve? ")
         dp_choice_int = validate_input(dp_choice, len(dp_list))
         if dp_choice_int>0:
             selected_dp = dp_list[dp_choice_int-1]
             break
-    print("You have selected %s." % (selected_dp.get_name()))
+    print("You have selected %s.\n" % (selected_dp.get_name()))
     return selected_dp
 
 
 def choose_filter_value(filter):
     while True:
-        print("How do you want to specify value(s) for the %s filter?" % (filter.get_name()))
+        print("\nHow do you want to specify value(s) for the %s filter?" % (filter.get_name()))
         print("%d) Specify single value." % filters.FilterParams.SINGLE_VALUE)
         print("%d) Specify multiple values." % filters.FilterParams.MULTIPLE_VALUES)
         max_filter_val = filters.FilterParams.MULTIPLE_VALUES
@@ -51,7 +65,7 @@ def choose_filter_value(filter):
             max_filter_val = filters.FilterParams.VALUE_RANGE
         max_filter_val += 1
         print("%d) Show valid values for this filter." % (max_filter_val))
-        value_type_choice = input("How do you want to specify filter values? ")
+        value_type_choice = input("\nHow do you want to specify filter values? ")
         value_type_choice_int = validate_input(value_type_choice, max_filter_val)
         if value_type_choice_int==max_filter_val:
             #Print valid values
@@ -142,11 +156,11 @@ def choose_filters(filter_list, selected_dp):
         if f.get_data_product() in filter_dps:
             remaining_filter_list.append(f)
     while True:
-        print("These are the available filters you can use to get a subset of the data.  You may add multiple filters:")
+        print("These are the available filters you can use to get a subset of CyberShake data.  You may add multiple filters:")
         for i,f in enumerate(remaining_filter_list):
             print("\t%d) %s" % ((i+1), f.get_name()))
         print("\t%d) Done adding filters" % (len(remaining_filter_list)+1))
-        filt_choice = input("Which filter would you like to add next? ")
+        filt_choice = input("\nWhich filter would you like to add next? ")
         filt_choice_int = validate_input(filt_choice, len(remaining_filter_list)+1)
         if (filt_choice_int>0):
             if filt_choice_int==len(remaining_filter_list)+1:
@@ -161,21 +175,28 @@ def choose_filters(filter_list, selected_dp):
             selected_filters.append(selected_filt)
             remaining_filter_list.remove(selected_filt)
             continue
-    print("You have selected the following filters:")
+    return selected_filters
+
+
+def get_user_input(model_list, dp_list, filter_list):
+    print("Welcome to the CyberShake Data Access tool.\n")
+    #Model
+    selected_model = choose_model(model_list)
+    #Data product
+    selected_dp = choose_data_product(dp_list)
+    #Filter(s)
+    selected_filters = choose_filters(filter_list, selected_dp)
+    print("\nYou have generated the following data product request:\n")
+    print("Model:")
+    print("\t%s" % selected_model.get_name())
+    print("\nData product:")
+    print("\t%s" % selected_dp.get_name())
+    print("\nFilters:")
     if len(selected_filters)==0:
         print("\tNone")
     else:
         for s in selected_filters:
             print("\t%s" % s.get_filter_string())
-    return selected_filters
-
-
-def get_user_input(dp_list, filter_list):
-    print("Welcome to the CyberShake Data Access tool.")
-    #Data product
-    selected_dp = choose_data_product(dp_list)
-    #Filter(s)
-    selected_filters = choose_filters(filter_list, selected_dp)
-    return (selected_dp, selected_filters)
+    return (selected_model, selected_dp, selected_filters)
     
 
