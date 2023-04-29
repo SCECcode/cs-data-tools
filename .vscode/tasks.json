@@ -33,7 +33,7 @@
         {
             "label": "run_data_collector",
             "type": "shell",
-            "command": "python3.8 /home/scott/git/cs-data-tools/src/data_collector/run_data_collector.py -i csdata.231450_04272023.urls -o /tmp/rvs -t /tmp",
+            "command": "python3.8 /home/scott/git/cs-data-tools/src/data_collector/run_data_collector.py -i csdata.143118_04282023.urls -o /tmp/rvs -t /tmp",
             "group": {
                 "kind": "build",
                 "isDefault": true
@@ -47,7 +47,15 @@
                 "kind": "build",
                 "isDefault": true
             }
+        },
+        {
+            "label": "construct_rvs_db",
+            "type": "shell",
+            "command": "python3.8 /home/scott/git/cs-data-tools/src/utils/construct_rvs_db.py -c /home/scott/git/cs-data-tools/src/db_wrapper/focal.cfg -s 'Study 15.12' -o /home/scott/git/cs-data-tools/src/utils/num_rvs.sqlite",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
         }
-
     ]
 } 

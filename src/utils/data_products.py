@@ -15,7 +15,7 @@ import utils.filters as filters
 
 class DataProducts:
 
-    def __init__(self, name, requires_file=False, relevant_filters=[], help_string=""):
+    def __init__(self, name, requires_file=False, relevant_filters=[], help_string="", distinct=False):
         self.name = name
         self.requires_file = requires_file
         self.select_fields = []
@@ -24,6 +24,8 @@ class DataProducts:
         self.metadata_from_tables = []
         self.relevant_filters = relevant_filters
         self.help_string = help_string
+        self.distinct = distinct
+        self.sort = 0
 
     def get_name(self):
         return self.name
@@ -52,11 +54,22 @@ class DataProducts:
 
     def get_metadata_query(self):
         return (self.metadata_select_fields, self.metadata_from_tables)
+    
+    def set_sort(self, sort_order):
+        if sort_order==0:
+            self.sort = 0
+        elif sort_order<0:
+            self.sort = -1
+        else:
+            self.sort = 1
+
+    def get_distinct(self):
+        return self.distinct
 
 def create_data_products():
     dp_list = []
     #Sites
-    dp_sites = DataProducts('Site Info', requires_file=False, relevant_filters=[filters.FilterDataProducts.SITES], help_string="List of valid site names.")
+    dp_sites = DataProducts('Site Info', requires_file=False, relevant_filters=[filters.FilterDataProducts.SITES], help_string="Site name and location.")
     dp_sites.set_query(fields=["CyberShake_Sites.CS_Short_Name", "CyberShake_Sites.CS_Site_Name"], tables=["CyberShake_Sites"])
     dp_sites.set_metadata_query(fields=["CyberShake_Sites.CS_Site_Lat", "CyberShake_Sites.CS_Site_Lon"], tables=["CyberShake_Sites"])
     dp_list.append(dp_sites)
@@ -66,10 +79,14 @@ def create_data_products():
     dp_seismograms.set_metadata_query(fields=["CyberShake_Sites.CS_Short_Name", "CyberShake_Runs.Run_ID", "Ruptures.Mag", "Ruptures.Prob", "Ruptures.Source_Name"], tables=["CyberShake_Sites", "CyberShake_Runs", "Ruptures"])
     dp_list.append(dp_seismograms)
     #IMs
-    dp_intensity_measures = DataProducts('Intensity Measures', requires_file=False, relevant_filters=[filters.FilterDataProducts.SITES, filters.FilterDataProducts.EVENTS, filters.FilterDataProducts.IMS], help_string="Intensity measure data.")
+    dp_intensity_measures = DataProducts('Intensity Measures', requires_file=False, relevant_filters=[filters.FilterDataProducts.SITES, filters.FilterDataProducts.EVENTS, filters.FilterDataProducts.IMS], help_string="RotD50 intensity measure data.")
     dp_intensity_measures.set_query(fields=["PeakAmplitudes.IM_Value"], tables=["PeakAmplitudes"])
     dp_intensity_measures.set_metadata_query(fields=["CyberShake_Sites.CS_Short_Name", "PeakAmplitudes.Run_ID", "PeakAmplitudes.Source_ID", "PeakAmplitudes.Rupture_ID", "PeakAmplitudes.Rup_Var_ID", "Ruptures.Mag", "Ruptures.Prob", "Ruptures.Source_Name", "IM_Types.IM_Type_Value", "IM_Types.IM_Type_Component", "IM_Types.Units"], tables=["CyberShake_Sites", "PeakAmplitudes", "Ruptures", "IM_Types"])
     dp_list.append(dp_intensity_measures)
+    #Events
+    dp_events = DataProducts('Events', requires_file=False, relevant_filters=[filters.FilterDataProducts.SITES, filters.FilterDataProducts.EVENTS], help_string="Metadata about individual events.", distinct=True)
+    dp_events.set_metadata_query(fields=["Ruptures.Source_ID", "Ruptures.Rupture_ID", "Ruptures.Source_Name", "Ruptures.Mag", "Ruptures.Prob", "Ruptures.Start_Lat", "Ruptures.Start_Lon", "Ruptures.End_Lat", "Ruptures.End_Lon", "Rupture_Variations.Rup_Var_ID"], tables=["Ruptures", "Rupture_Variations", "CyberShake_Site_Ruptures"])
+    dp_list.append(dp_events)
     #Durations
     #dp_durations = DataProducts('Durations', requires_file=False, help_string="Duration data.")
     #dp_intensity_measures.set_metadata_select("select PeakAmplitudes.Run_ID, PeakAmplitudes.Source_ID, PeakAmplitudes.Rupture_ID, PeakAmplitudes.Rup_Var_ID, Ruptures.Mag, Ruptures.Prob")

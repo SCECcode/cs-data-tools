@@ -4,19 +4,22 @@ import sys
 import os
 import json
 
+VERSION = "1.0.0_04282023"
+
 class ExitCodes:
 
-    NO_DATAPRODUCTS = 1
-    NO_FILTERS = 2
-    NO_MODELS = 3
-    VALUE_OUT_OF_RANGE = 4
-    INVALID_ARGUMENTS = 5
-    MISSING_ARGUMENTS = 6
-    FILE_PARSING_ERROR = 7
-    BAD_FILE_PATH = 8
-    DATABASE_CONNECTION_ERROR = 9
-    DATABASE_COMMAND_ERROR = 10
-    FILE_WRITING_ERROR = 11
+	NO_ERROR = 0
+	NO_DATAPRODUCTS = 1
+	NO_FILTERS = 2
+	NO_MODELS = 3
+	VALUE_OUT_OF_RANGE = 4
+	INVALID_ARGUMENTS = 5
+	MISSING_ARGUMENTS = 6
+	FILE_PARSING_ERROR = 7
+	BAD_FILE_PATH = 8
+	DATABASE_CONNECTION_ERROR = 9
+	DATABASE_COMMAND_ERROR = 10
+	FILE_WRITING_ERROR = 11
 
 
 class CSJSONEncoder(json.JSONEncoder):
@@ -59,3 +62,16 @@ def get_rv_seismogram_size(study_name):
 	if study_name=='Study 15.12':
 		nt = 12000
 	return components*nt*sizeof_float + header_size
+
+def read_config(config_file):
+    config_dict = dict()
+    with open(config_file, "r") as fp_in:
+        data = fp_in.readlines()
+        for line in data:
+            (key, value) = line.split("=")
+            config_dict[key.strip()] = value.strip()
+        fp_in.close()
+    return config_dict
+
+def get_version():
+	return VERSION

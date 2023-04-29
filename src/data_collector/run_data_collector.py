@@ -19,8 +19,13 @@ def parse_args(argv):
     parser.add_argument('-i', '--input-filename', dest='input_filename', action='store', default=None, help="Path to file containing the URLs and variation IDs.")
     parser.add_argument('-o', '--output-directory', dest='output_directory', action='store', default=".", help="Path to output directory to store files in.")
     parser.add_argument('-t', '--temp-directory', dest='temp_directory', action='store', default=".", help="Path to temporary directory to store files before extraction.")
+    parser.add_argument('-d', '--debug', dest='debug', action='store_true', default=False, help='Turn on debug statements.')
+    parser.add_argument('-v', '--version', dest='version', action='store_true', default=False, help="Show version number and exit.")
     args = parser.parse_args(args=argv)
     args_dict = dict()
+    if args.version==True:
+        print("Version: %s" % utilities.get_version())
+        sys.exit(utilities.ExitCodes.NO_ERROR)
     if args.input_filename is None:
         print("Path to input file must be provided, aborting.", file=sys.stderr)
         sys.exit(utilities.ExitCodes.MISSING_ARGUMENTS)
@@ -46,6 +51,7 @@ def parse_args(argv):
 
 def retrieve_files(args_dict):
     input_file = args_dict['input_filename']
+    local_filenames = []
     with open(input_file, 'r') as fp_in:
         data = fp_in.readlines()
         num_files = len(data)
@@ -58,12 +64,14 @@ def retrieve_files(args_dict):
             if not os.path.exists(local_directory):
                 os.makedirs(local_directory)
             local_filename = "%s/%s" % (local_directory, basename)
+            local_filenames.append(local_filename)
             url_data = urllib.request.urlopen(url).read()
             with open(local_filename, 'wb') as fp_out:
                 fp_out.write(url_data)
                 fp_out.flush()
                 fp_out.close()
         fp_in.close()
+    return local_filenames
 
 def extract_rvs(args_dict):
     input_file = args_dict['input_filename']
@@ -71,8 +79,8 @@ def extract_rvs(args_dict):
         data = fp_in.readlines()
         num_files = len(data)
         for i, line in enumerate(data):
-            if (i%10==0):
-                print("Extracting rupture variations from file %d of %d." % (i, num_files))
+            if (i%100==0):
+                print("Extracting rupture variations from file %d of %d." % ((i+1), num_files))
             (url, rvs) = line.strip().split()
             (protocol, blank, prefix, site_name, run_id, basename) = url.split("/")
             rv_list = []
@@ -113,13 +121,21 @@ def extract_rvs(args_dict):
                     sys.exit(utilities.ExitCodes.FILE_PARSING_ERROR)
                 fp_rup_in.close()
         fp_in.close()
-        
+    print("Finished extracting rupture variations to %s." % (args_dict['output_directory']))
+    
+def delete_temp_files(temp_directory, local_filenames):
+    print("Removing temporary files from %s." % temp_directory)
+    #Just make sure they start with 'Seismogram' and end with '.grm'
+    for f in local_filenames:
+        if f.find('Seismogram')==0 and f[-4:]=='.grm':
+            os.remove(f)
 
 def run_main(argv):
-    args_dict = parse_args(argv[1:])
-    retrieve_files(args_dict)
+    args_dict = parse_args(argv)
+    local_filenames = retrieve_files(args_dict)
     extract_rvs(args_dict)
+    delete_temp_files(args_dict['temp_directory'], local_filenames)
 
 if __name__=="__main__":
-    run_main(sys.argv)
+    run_main(sys.argv[1:])
     sys.exit(0)

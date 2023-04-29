@@ -13,7 +13,7 @@ import utils.data_products as data_products
 import utils.models as models
 
 class Query:
-    sort_order = ['Study_Name',
+    field_order = ['Study_Name',
                   'Run_ID', 
                     'CS_Short_Name',
                     'CS_Site_Name',
@@ -28,12 +28,18 @@ class Query:
                     'IM_Type_Value',
                     'IM_Type_Component',
                     'IM_Value',
-                    'Units']
+                    'Units',
+                    'Start_Lat',
+                    'Start_Lon',
+                    'End_Lat',
+                    'End_Lon']
 
     def __init__(self):
         self.select_fields = set()
         self.from_tables = set()
         self.where_clauses = set()
+        self.sort = ""
+        self.distinct = False
 
     def add_select(self, select_fields):
         for s in select_fields:
@@ -46,6 +52,12 @@ class Query:
     def add_where(self, where_fields):
         for w in where_fields:
             self.where_clauses.add(w)
+
+    def set_sort(self, sort_clause):
+        self.sort = sort_clause
+
+    def get_sort(self):
+        return self.sort
 
     def get_select_string(self):
         #Use the sorted version
@@ -60,11 +72,17 @@ class Query:
     def get_query_string(self):
         return "select %s from %s where %s" % (self.get_select_string(), self.get_from_string(), self.get_where_string())
 
+    def set_distinct(self, distinct):
+        self.distinct = distinct
+
+    def get_distinct(self):
+        return self.distinct
+
     #Sorts the select fields into preference order, returns list
     def sort_select(self):
         sorted_select_fields = []
         select_fields_list = list(self.select_fields)
-        for f in self.sort_order:
+        for f in self.field_order:
             for s in select_fields_list:
                 #Match on suffix - don't care which table it comes from
                 if f==s.split(".")[1]:
@@ -128,7 +146,7 @@ class Query:
             if table2=="Studies":
                 added_tables.append("CyberShake_Runs")
                 self.add_from(["CyberShake_Runs"])
-                self.add_where(["CyberShake_Sites.CS_Site_ID=CyberShake_Runs.Site_ID", "CyberShake_Runs.Study_ID=Studies.Study_ID"])
+                self.add_where(["CyberShake_Runs.Site_ID=CyberShake_Sites.CS_Site_ID", "CyberShake_Runs.Study_ID=Studies.Study_ID"])
         elif table1=="IM_Types":
             if table2=="PeakAmplitudes":
                 self.add_where(["IM_Types.IM_Type_ID=PeakAmplitudes.IM_Type_ID"])
@@ -150,39 +168,55 @@ def construct_queries(model, dp, filter_list):
     (from_tables, where_clauses) = model.get_query()
     query.add_from(from_tables)
     query.add_where(where_clauses)
-    print(from_tables)
-    print(where_clauses)
     #Add data product
     (select_fields, from_tables) = dp.get_query()
     query.add_select(select_fields)
     query.add_from(from_tables)
+    if dp.get_distinct()==True:
+        query.set_distinct(True)
     #Add metadata tables
     (metadata_select, metadata_from) = dp.get_metadata_query()
     query.add_select(metadata_select)
     query.add_from(metadata_from)
-    #If we're retrieving IM values, restrict to RotD50
-    if filters.FilterDataProducts.IMS in dp.get_relevant_filters():
-        query.add_from(["IM_Types"])
-        query.add_where(["IM_Types.IM_Type_Component='RotD50'"])
     for f in filter_list:
+        #If we're filtering on IMs, restrict to RotD50
+        if f.get_data_product()==filters.FilterDataProducts.IMS:
+            query.add_from(["IM_Types"])
+            query.add_where(["IM_Types.IM_Type_Component='RotD50'"])
         (where_fields, from_tables) = f.get_query()
-        print("Filter %s adds from tables %s and where fields %s." % (f.get_name(), from_tables, where_fields))
+        #print("Filter %s adds from tables %s and where fields %s." % (f.get_name(), from_tables, where_fields))
         query.add_from(from_tables)
         fp = f.get_filter_params()
         quote = ""
         if not f.is_numeric():
             quote = "'" 
         if fp==filters.FilterParams.SINGLE_VALUE:
-            query.add_where(["%s=%s%s%s" % (where_fields[0], quote, f.get_value(), quote)])
+            if f.get_contains()==True:
+                query.add_where(["%s LIKE %s%%%s%%%s" % (where_fields[0], quote, f.get_value(), quote)])
+            else:
+                query.add_where(["%s=%s%s%s" % (where_fields[0], quote, f.get_value(), quote)])
         elif fp==filters.FilterParams.MULTIPLE_VALUES:
             where_clauses = []
             for v in f.get_values():
-                where_clauses.append("%s=%s%s%s" % (where_fields[0], quote, v, quote))
+                if f.get_contains()==True:
+                    where_clauses.append(["%s LIKE %s%%%s%%%s" % (where_fields[0], quote, v, quote)])
+                else: 
+                    where_clauses.append("%s=%s%s%s" % (where_fields[0], quote, v, quote))
             query.add_where(["(%s)" % " or ".join(where_clauses)])
         elif fp==filters.FilterParams.VALUE_RANGE:
+            #This filter makes no sense with a contains, so let's not worry about it
             (min, max) = f.get_values()
             where_clause = "%s>=%s%s%s and %s<=%s%s%s" % (where_fields[0], quote, min, quote, where_fields[0], quote, max, quote)
             query.add_where([where_clause])
+        #Check sort
+        if f.get_sort()<0:
+            #Sort in reverse
+            sort_clause = 'order by %s desc' % (f.where_fields[0])
+            query.set_sort(sort_clause)
+        elif f.get_sort()>0:
+            #Sort in ascending
+            sort_clause = 'order by %s asc' % (f.where_fields[0])
+            query.set_sort(sort_clause)
     #Need to join any unconnected tables
     query.connect_tables()
     return query

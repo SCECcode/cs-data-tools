@@ -50,7 +50,7 @@ def choose_data_product(dp_list):
         if dp_choice_int>0:
             selected_dp = dp_list[dp_choice_int-1]
             break
-    print("You have selected %s.\n" % (selected_dp.get_name()))
+    print("You have selected %s." % (selected_dp.get_name()))
     return selected_dp
 
 
@@ -89,7 +89,10 @@ def choose_filter_value(filter):
             break
     if value_type_choice_int==filters.FilterParams.SINGLE_VALUE:
         while True:
-            value = input("What value do you want to use? ")
+            input_string = "What value do you want to use? "
+            if filter.get_units() is not None:
+                input_string = "What value do you want to use (units %s)? " % filter.get_units()
+            value = input(input_string)
             try:
                 value_obj = filter.get_type()(value)
             except ValueError:
@@ -100,7 +103,10 @@ def choose_filter_value(filter):
             break
     elif value_type_choice_int==filters.FilterParams.MULTIPLE_VALUES:
         while True:
-            values = input("What values (comma-separated) do you want to use? ")
+            input_string = "What values (comma-separated) do you want to use? "
+            if filter.get_units() is not None:
+                input_string = "What values (comma-separated) do you want to use (units %s)? " % filter.get_units()
+            values = input(input_string)
             pieces = values.split(',')
             value_list = []
             for p in pieces:
@@ -115,7 +121,10 @@ def choose_filter_value(filter):
             break
     elif value_type_choice_int==filters.FilterParams.VALUE_RANGE:
         while True:
-            values = input("What range do you want to use? Specify as min, max: ")
+            input_string = "What range do you want to use? Specify as min, max: "
+            if filter.get_units() is not None:
+                input_string = "What range do you want to use? Specify as min, max (units %s): " % filter.get_units()
+            values = input(input_string)
             pieces = values.split(",")
             if len(pieces)!=2:
                 print("'%s' isn't in min, max format." % values)
@@ -148,15 +157,18 @@ def choose_filter_value(filter):
     return filter
 
 
-def choose_filters(filter_list, selected_dp):
+def choose_filters(filter_list, selected_dp, selected_model):
     selected_filters = []
     remaining_filter_list = []
     filter_dps = selected_dp.get_relevant_filters()
     for f in filter_list:
+        if f.get_name()=='Intensity Measure Period':
+            #Update with periods from model
+            f.set_values_list(selected_model.get_periods())
         if f.get_data_product() in filter_dps:
             remaining_filter_list.append(f)
     while True:
-        print("These are the available filters you can use to get a subset of CyberShake data.  You may add multiple filters:")
+        print("\nThese are the available filters you can use to get a subset of CyberShake data.  You may add multiple filters:")
         for i,f in enumerate(remaining_filter_list):
             print("\t%d) %s" % ((i+1), f.get_name()))
         print("\t%d) Done adding filters" % (len(remaining_filter_list)+1))
@@ -177,6 +189,45 @@ def choose_filters(filter_list, selected_dp):
             continue
     return selected_filters
 
+def choose_sort_order(sort_item):
+    while True:
+        print("\nYou've chosen to sort on %s." % sort_item.get_name())
+        print("\t1) Ascending order")
+        print("\t2) Descending order")
+        order_choice = input("What order do you want to sort in? ")
+        order_choice_int = validate_input(order_choice, 2)
+        if order_choice_int>0:
+            if order_choice_int==1:
+                sort_item.set_sort(1)
+            elif order_choice_int==2:
+                sort_item.set_sort(-1)
+            break
+
+def choose_sort(selected_filters):
+    do_sort = False
+    while True:
+        do_sort_choice = input("\nWould you like to sort your results (y/n)? ")
+        if do_sort_choice.lower()=='n':
+            break
+        elif do_sort_choice.lower()=='y':
+            do_sort = True
+            break
+        else:
+            print("'%s' is not a valid option." % do_sort_choice)
+    #Not sorting today
+    if do_sort==False:
+        return
+    while True:
+        print("You can sort on one of the following criteria:")
+        for i,f in enumerate(selected_filters):
+            print("\t%d) %s" % ((i+1), f.get_name()))
+        sort_choice = input("What would you like to sort on? ")
+        sort_choice_int = validate_input(sort_choice, len(selected_filters))
+        if (sort_choice_int>0):
+            sort_item = selected_filters[sort_choice_int-1]
+            choose_sort_order(sort_item)
+            break
+
 
 def get_user_input(model_list, dp_list, filter_list):
     print("Welcome to the CyberShake Data Access tool.\n")
@@ -185,7 +236,9 @@ def get_user_input(model_list, dp_list, filter_list):
     #Data product
     selected_dp = choose_data_product(dp_list)
     #Filter(s)
-    selected_filters = choose_filters(filter_list, selected_dp)
+    selected_filters = choose_filters(filter_list, selected_dp, selected_model)
+    #Optional sort
+    choose_sort(selected_filters)
     print("\nYou have generated the following data product request:\n")
     print("Model:")
     print("\t%s" % selected_model.get_name())
@@ -196,7 +249,12 @@ def get_user_input(model_list, dp_list, filter_list):
         print("\tNone")
     else:
         for s in selected_filters:
-            print("\t%s" % s.get_filter_string())
+            if s.get_sort()<0:
+                print("\t%s, sort descending" % s.get_filter_string())
+            elif s.get_sort()>0:
+                print("\t%s, sort ascending" % s.get_filter_string())
+            else:
+                print("\t%s" % s.get_filter_string())
     return (selected_model, selected_dp, selected_filters)
     
 

@@ -55,7 +55,7 @@ class FilterParams(IntEnum):
 class Filter:
 
 	#filt_type is datatype of filter
-	def __init__(self, name, filt_type=None, data_product=None, help_string=""):
+	def __init__(self, name, filt_type=None, data_product=None, help_string="", units=None):
 		self.name = name
 		self.type = filt_type
 		self.values = []
@@ -64,7 +64,8 @@ class Filter:
 		self.from_tables = []
 		self.data_product = data_product
 		self.help_string = help_string
-
+		self.sort = 0
+		self.units = units
 
 	def get_name(self):
 		return self.name
@@ -75,13 +76,20 @@ class Filter:
 	def get_filter_params(self):
 		return self.filter_params
 
+	def get_units(self):
+		return self.units
+
 	#The joins required to select on this filter
-	def set_query(self, fields=[], tables=[]):
+	def set_query(self, fields=[], tables=[], contains=False):
 		self.where_fields.extend(fields)
 		self.from_tables.extend(tables)
+		self.contains = contains
 
 	def get_query(self):
 		return (self.where_fields, self.from_tables)
+
+	def get_contains(self):
+		return self.contains
 
 	def set_value(self, value):
 		self.values.clear()
@@ -137,6 +145,8 @@ class Filter:
 		obj_dict['name'] = self.name
 		obj_dict['filter_params'] = self.filter_params
 		obj_dict['values'] = self.values
+		if self.sort!=0:
+			obj_dict['sort'] = self.sort
 		return obj_dict
 
 
@@ -151,6 +161,16 @@ class Filter:
 			pretty_string = "%s: [%s,%s]" % (pretty_string, self.values[0], self.values[1])
 		return pretty_string
 
+	def set_sort(self, sort_order):
+		if sort_order==0:
+			self.sort = 0
+		elif sort_order<0:
+			self.sort = -1
+		else:
+			self.sort = 1
+
+	def get_sort(self):
+		return self.sort
 
 #Class for a filter which has a preset list of possible values - checks user input
 class EnumeratedFilter(Filter):
@@ -215,7 +235,7 @@ class RangeFilter(Filter):
 			print("The %s filter can only take values [%s, %s]." % (self.name, str(self.min), str(self.max)))
 			return utilities.ExitCodes.VALUE_OUT_OF_RANGE
 		return super().set_value_range(min, max)
-	
+
 
 def create_filters():
 	filters = []
@@ -225,7 +245,7 @@ def create_filters():
 	im_type_filter.set_query(fields=["IM_Types.IM_Type_Value"], tables=["IM_Types"])
 	filters.append(im_type_filter)
 	#IM value
-	im_value_filter = Filter('Intensity Measure Value', filt_type=float, data_product=FilterDataProducts.IMS, help_string="Value of intensity measure, in cm/s2 for accelerations and cm/s for velocities.")
+	im_value_filter = Filter('Intensity Measure Value', filt_type=float, data_product=FilterDataProducts.IMS, help_string="Value of intensity measure, in cm/s2.", units='cm/sec2')
 	im_value_filter.set_query(fields=["PeakAmplitudes.IM_Value"], tables=["PeakAmplitudes"])
 	filters.append(im_value_filter)
 	#Magnitude
@@ -234,25 +254,22 @@ def create_filters():
 	mag_filter.set_query(fields=["Ruptures.Mag"], tables=['Ruptures'])
 	filters.append(mag_filter)
 	#Sites
-	sites_filter = EnumeratedFilter('Site Name', filt_type=str, data_product=FilterDataProducts.SITES, help_string="3-5 character site name.")
-	sites_filter.set_values_list(["USC", "PAS", "WNGC", "STNI"])
+	sites_filter = Filter('Site Name', filt_type=str, data_product=FilterDataProducts.SITES, help_string="3-5 character site name.")
+	#sites_filter.set_values_list(["USC", "PAS", "WNGC", "STNI"])
 	sites_filter.set_query(fields=["CyberShake_Sites.CS_Short_Name"], tables=['CyberShake_Sites'])
 	filters.append(sites_filter)
 	#Site-Rupture dist
-	#site_rup_dist_filter = RangeFilter('Site-Rupture Distance', filt_type=float, help_string="Site-rupture distance, which is determined by calculating the distance between the site and each point on the rupture surface and taking the minimum.")
-	#site_rup_dist_filter.set_range(min=0.0, max=200.0)
-	#filters.append(site_rup_dist_filter)
+	site_rup_dist_filter = RangeFilter('Site-Rupture Distance', filt_type=float, data_product=FilterDataProducts.EVENTS, help_string="Site-rupture distance, which is determined by calculating the distance between the site and each point on the rupture surface and taking the minimum.")
+	site_rup_dist_filter.set_range(min=0.0, max=200.0)
+	site_rup_dist_filter.set_query(fields=["CyberShake_Site_Ruptures.Site_Rupture_Dist"], tables=["CyberShake_Site_Ruptures"])
+	filters.append(site_rup_dist_filter)
 	#Probability
 	#prob_filter = RangeFilter('Rupture Probability', filt_type=float, help_string="The probability of the rupture occuring, as specified by the ERF.  Note that if the rupture has multiple rupture variations, this probability will be distributed among the rupture variations.")
 	#prob_filter.set_range(min=0.0, max=1.0)
 	#filters.append(prob_filter)
 	#Source name
-	#source_name_filter = Filter('Source Name', filt_type=str, help_string="Name of the source.  Any sources which contain this string will be selected.")
-	#filters.append(source_name_filter)
-	#Study
-	#study_filter = EnumeratedFilter('Study Name', filt_type=str, data_product=FilterDataProducts.SITES, help_string="Study to select data from.")
-	#study_filter.set_values_list(['Study 15.4', 'Study 15.12', 'Study 17.3', 'Study 18.8', 'Study 21.12', 'Study 22.12'])
-	#study_filter.set_query(fields=["Studies.Study_Name"], tables=["Studies"])
-	#filters.append(study_filter)
+	source_name_filter = Filter('Source Name', filt_type=str, data_product=FilterDataProducts.EVENTS, help_string="Name of the source.  Any sources which contain this string will be selected.")
+	source_name_filter.set_query(fields=["Ruptures.Source_Name"], tables=["Ruptures"], contains=True)
+	filters.append(source_name_filter)
 	return filters
 

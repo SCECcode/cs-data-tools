@@ -29,8 +29,11 @@ def parse_args(argv):
 	parser.add_argument('-pl', '--products-list', dest='print_products', action='store_true', default=False, help="Print information about available data products and exit.")
 	parser.add_argument('-o', '--output-filename', dest='output_filename', action='store', default=None, help="Path to JSON file describing the data request.")
 	parser.add_argument('-no', '--no-output-file', dest='write_output', action='store_false', default=True, help="Don't write an output JSON file.")
+	parser.add_argument('-d', '--debug', dest='debug', action='store_true', default=False, help='Turn on debug statements.')
+	parser.add_argument('-v', '--version', dest='version', action='store_true', default=False, help="Show version number and exit.")
 	args = parser.parse_args(args=argv)
 	exit = False
+	args_dict = dict()
 	if args.print_filters==True:
 		exit = True
 		load_data()
@@ -43,8 +46,11 @@ def parse_args(argv):
 		print("These are the available data products.\n")
 		for d in dp_list:
 			print("\t%s: %s" % (d.get_name(), d.get_help_string()))
+	if args.version==True:
+		exit = True
+		print("Version: %s" % utilities.get_version())
 	if exit==True:
-		sys.exit(0)
+		sys.exit(utilities.ExitCodes.NO_ERROR)
 	if args.output_filename is not None:
 		if args.write_output is False:
 			print("Both --output-filename and --no-output-file were specified.  Please only select one.  Aborting.")
@@ -59,7 +65,8 @@ def parse_args(argv):
 	else:
 		#args.write_output is false, and output_filename wasn't set
 		output_filename = None
-	return output_filename
+	args_dict['output_filename'] = output_filename
+	return args_dict
 
 
 def load_data():
@@ -99,12 +106,12 @@ def write_filter_file(selected_model, selected_dp, selected_filters, output_file
 		fp_out.close()
 
 def run_main(argv):
-	output_filename = parse_args(argv[1:])
+	args_dict = parse_args(argv)
 	load_data()
-	(delected_model, selected_dp, selected_filters) = prompt_user()
-	write_filter_file(delected_model, selected_dp, selected_filters, output_filename)
-	print("\nYour data request was written to %s." % output_filename)
+	(selected_model, selected_dp, selected_filters) = prompt_user()
+	write_filter_file(selected_model, selected_dp, selected_filters, args_dict['output_filename'])
+	print("\nYour data request was written to %s." % args_dict['output_filename'])
 
 if __name__=="__main__":
-	run_main(sys.argv)
+	run_main(sys.argv[1:])
 	sys.exit(0)
