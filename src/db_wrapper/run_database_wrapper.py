@@ -113,6 +113,7 @@ def read_input(input_filename):
     return input_dict
 
 def execute_queries(config_dict, input_dict):
+    print("Executing database queries.")
     try:
         if config_dict['type'].lower()=='mysql':
             conn = pymysql.connect(host=config_dict["host"], user=config_dict["user"], passwd=config_dict["password"], db=config_dict['db'])

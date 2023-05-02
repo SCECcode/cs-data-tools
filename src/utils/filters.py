@@ -291,10 +291,10 @@ def create_filters():
 	sites_filter.set_query(fields=["CyberShake_Sites.CS_Short_Name"], tables=['CyberShake_Sites'])
 	filters.append(sites_filter)
 	#Site-Rupture dist
-	site_rup_dist_filter = RangeFilter('Site-Rupture Distance', filt_type=float, data_product=FilterDataProducts.EVENTS, help_string="Site-rupture distance, which is determined by calculating the distance between the site and each point on the rupture surface and taking the minimum.")
-	site_rup_dist_filter.set_range(min=0.0, max=200.0)
-	site_rup_dist_filter.set_query(fields=["CyberShake_Site_Ruptures.Site_Rupture_Dist"], tables=["CyberShake_Site_Ruptures"])
-	filters.append(site_rup_dist_filter)
+	#site_rup_dist_filter = RangeFilter('Site-Rupture Distance', filt_type=float, data_product=FilterDataProducts.EVENTS, help_string="Site-rupture distance, which is determined by calculating the distance between the site and each point on the rupture surface and taking the minimum.")
+	#site_rup_dist_filter.set_range(min=0.0, max=200.0)
+	#site_rup_dist_filter.set_query(fields=["CyberShake_Site_Ruptures.Site_Rupture_Dist"], tables=["CyberShake_Site_Ruptures"])
+	#filters.append(site_rup_dist_filter)
 	#Probability
 	#prob_filter = RangeFilter('Rupture Probability', filt_type=float, help_string="The probability of the rupture occuring, as specified by the ERF.  Note that if the rupture has multiple rupture variations, this probability will be distributed among the rupture variations.")
 	#prob_filter.set_range(min=0.0, max=1.0)
