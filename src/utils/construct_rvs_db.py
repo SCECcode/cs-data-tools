@@ -103,8 +103,8 @@ def generate_db(args_dict, config_dict):
         print(query)
         from_cur.execute(query)
         res = from_cur.fetchall()
-        #Construct schema in target DB
-        create_table_cmd = 'CREATE TABLE Rupture_Variation_Counts ' \
+        #Construct schema in target DB, if it doesn't exist
+        create_table_cmd = 'CREATE TABLE IF NOT EXISTS Rupture_Variation_Counts ' \
             '(Study_Name TEXT, Source_ID INTEGER, Rupture_ID INTEGER, Num_Rup_Vars INTEGER)'
         to_cur.execute(create_table_cmd)
         print("Inserting values into SQLite db.")

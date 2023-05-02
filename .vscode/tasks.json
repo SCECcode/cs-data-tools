@@ -51,7 +51,7 @@
         {
             "label": "construct_rvs_db",
             "type": "shell",
-            "command": "python3.8 /home/scott/git/cs-data-tools/src/utils/construct_rvs_db.py -c /home/scott/git/cs-data-tools/src/db_wrapper/focal.cfg -s 'Study 15.12' -o /home/scott/git/cs-data-tools/src/utils/num_rvs.sqlite",
+            "command": "python3.8 /home/scott/git/cs-data-tools/src/utils/construct_rvs_db.py -c /home/scott/git/cs-data-tools/src/db_wrapper/moment.cfg -s 'Study 22.12 LF,Study 22.12 BB' -o /home/scott/git/cs-data-tools/src/utils/num_rvs.sqlite",
             "group": {
                 "kind": "build",
                 "isDefault": true

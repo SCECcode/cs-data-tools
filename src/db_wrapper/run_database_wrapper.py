@@ -60,7 +60,10 @@ suffix_dict = dict()
 suffix_dict['Study 15.12'] = "_bb"
 suffix_dict['Study 22.12 BB'] = "_bb"
 
+debug = False
+
 def parse_args(argv):
+    global debug
     parser = argparse.ArgumentParser(prog='Database Wrapper', description='Takes CyberShake data request queries, executes them, and delivers results + paths to on-disk data.')
     parser.add_argument('-i', '--input-filename', dest='input_filename', action='store', default=None, help="Path to query file describing the data request.")
     parser.add_argument('-o', '--output-filename', dest='output_filename', action='store', default=None, help="Path to output file, with query results.")
@@ -76,6 +79,8 @@ def parse_args(argv):
     if args.input_filename is None:
         print("Path to input file must be provided, aborting.", file=sys.stderr)
         sys.exit(utilities.ExitCodes.MISSING_ARGUMENTS)
+    if args.debug==True:
+        debug = True
     args_dict['input_filename'] = args.input_filename
     if args.output_filename is None:
         dt_tuple = datetime.datetime.now().timetuple()
@@ -130,7 +135,8 @@ def execute_queries(config_dict, input_dict):
     query = 'select %s from %s where %s' % (input_dict['select'], input_dict['from'], input_dict['where'])
     if 'sort' in input_dict:
         query = "%s %s" % (query, input_dict['sort'])
-    print(query)
+    if debug==True:
+        print(query)
     try:
         cur.execute(query)
     except Exception as e:
