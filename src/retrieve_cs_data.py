@@ -53,7 +53,7 @@ def parse_args():
     parser.add_argument('-n', "--request-label", dest='request_label', action='store', default=None, help="Label identifying the request (optional).")
     parser.add_argument('-fl', '--filter-list', dest='print_filters', action='store_true', default=False, help="Print information about available filters and exit.")
     parser.add_argument('-pl', '--products-list', dest='print_products', action='store_true', default=False, help="Print information about available data products and exit.")
-    parser.add_argument('-c', "--config-filename", dest='config_filename', action='store', default='src/db_wrapper/focal.cfg', help="Path to database configuration file (optional, default: focal.cfg)")
+    parser.add_argument('-c', "--config-filename", dest='config_filename', action='store', default=None, help="Path to database configuration file (optional, default: moment.cfg)")
     parser.add_argument('-o', '--output-directory', dest='output_directory', action='store', default=".", help="Path to output directory to store files in (optional, default is current working directory).")
     parser.add_argument('-t', '--temp-directory', dest='temp_directory', action='store', default=".", help="Path to temporary directory to store files before extraction (optional, default is current working directory).")
     parser.add_argument('-i', '--input-filename', dest='input_filename', action='store', default=None, help="Path to JSON file describing desired data products and filters to apply, in format outputted by Filter Generator step.  If supplied, Filter Generator is bypassed.  (optional)")
@@ -77,7 +77,12 @@ def parse_args():
         args_dict['print_products'] = True
     else:
         args_dict['print_products'] = False
-    args_dict['config_filename'] = args.config_filename
+    if args.config_filename is None:
+        #Use db_wrapper/moment.cfg as default
+        moment_cfg_path = '%s/db_wrapper/moment.cfg' % (os.path.dirname(os.path.abspath(__file__)))
+        args_dict['config_filename'] = moment_cfg_path
+    else:
+        args_dict['config_filename'] = args.config_filename
     args_dict['output_directory'] = args.output_directory
     args_dict['temp_directory'] = args.temp_directory
     args_dict['input_filename'] = args.input_filename
