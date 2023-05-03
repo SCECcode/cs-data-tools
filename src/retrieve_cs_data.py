@@ -50,7 +50,7 @@ import utils.utilities as utilities
 
 def parse_args():
     parser = argparse.ArgumentParser(prog='CyberShake Data Access Tool', description='Performs CyberShake data retrieval.')
-    parser.add_argument('-n', "--request-label", dest='request_label', action='store', default=None, help="Label identifying the request (optional).")
+    parser.add_argument('-l', "--request-label", dest='request_label', action='store', default=None, help="Label identifying the request (optional).")
     parser.add_argument('-fl', '--filter-list', dest='print_filters', action='store_true', default=False, help="Print information about available filters and exit.")
     parser.add_argument('-pl', '--products-list', dest='print_products', action='store_true', default=False, help="Print information about available data products and exit.")
     parser.add_argument('-c', "--config-filename", dest='config_filename', action='store', default=None, help="Path to database configuration file (optional, default: moment.cfg)")
@@ -98,7 +98,6 @@ def run_filter_generator(args_dict):
     if args_dict['debug']==True:
         arg_string = "%s -d" % arg_string
     arg_string = "%s -o csdata.%s.json" % (arg_string, args_dict['request_label'])
-    print(arg_string)
     filt_gen.run_filter_generator.run_main(arg_string.split())
 
 def run_query_builder(args_dict):
