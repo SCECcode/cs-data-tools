@@ -52,6 +52,7 @@ class ExitCodes:
 	DATABASE_CONNECTION_ERROR = 9
 	DATABASE_COMMAND_ERROR = 10
 	FILE_WRITING_ERROR = 11
+	FILE_DOWNLOAD_ERROR = 12
 
 
 class CSJSONEncoder(json.JSONEncoder):
@@ -93,6 +94,10 @@ def get_rv_seismogram_size(study_name):
 	header_size = 56
 	if study_name=='Study 15.12':
 		nt = 12000
+	elif study_name=='Study 22.12 LF':
+		nt = 8000
+	elif study_name=='Study 22.12 BB':
+		nt = 40000
 	return components*nt*sizeof_float + header_size
 
 def read_config(config_file):

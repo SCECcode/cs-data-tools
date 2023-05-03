@@ -42,7 +42,7 @@
         {
             "label": "retrieve_cs_data",
             "type": "shell",
-            "command": "python3.8 /home/scott/git/cs-data-tools/src/retrieve_cs_data.py -o /tmp/rvs -t /tmp -c /home/scott/git/cs-data-tools/src/db_wrapper/moment.cfg",
+            "command": "python3.8 /home/scott/git/cs-data-tools/src/retrieve_cs_data.py -d -o /tmp/rvs -t /tmp -c /home/scott/git/cs-data-tools/src/db_wrapper/moment.cfg",
             "group": {
                 "kind": "build",
                 "isDefault": true 

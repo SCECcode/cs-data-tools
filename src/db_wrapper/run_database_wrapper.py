@@ -38,6 +38,7 @@ import argparse
 import pymysql
 import datetime
 import sqlite3
+import timeit
 
 #Add one directory level above to path to find imports
 full_path = os.path.abspath(sys.argv[0])
@@ -55,6 +56,8 @@ MAX_OUTPUT_DATA_MB = 1000
 
 globus_dict = dict()
 globus_dict['Study 15.12'] = "https://g-41ed52.a78b8.36fe.data.globus.org"
+globus_dict['Study 22.12 LF'] = "https://g-be1d0b.a78b8.36fe.data.globus.org"
+globus_dict['Study 22.12 BB'] = "https://g-2d87a9.a78b8.36fe.data.globus.org"
 
 suffix_dict = dict()
 suffix_dict['Study 15.12'] = "_bb"
@@ -67,7 +70,7 @@ def parse_args(argv):
     parser = argparse.ArgumentParser(prog='Database Wrapper', description='Takes CyberShake data request queries, executes them, and delivers results + paths to on-disk data.')
     parser.add_argument('-i', '--input-filename', dest='input_filename', action='store', default=None, help="Path to query file describing the data request.")
     parser.add_argument('-o', '--output-filename', dest='output_filename', action='store', default=None, help="Path to output file, with query results.")
-    parser.add_argument('-c', "--config-filename", dest='config_filename', action='store', default='focal.cfg', help="Path to database configuration file.")
+    parser.add_argument('-c', "--config-filename", dest='config_filename', action='store', default='moment.cfg', help="Path to database configuration file.")
     parser.add_argument('-of', '--output-format', dest='output_format', action='store', default='csv', help='Output format for database results (either "csv" or "sqlite")')
     parser.add_argument('-d', '--debug', dest='debug', action='store_true', default=False, help='Turn on debug statements.')
     parser.add_argument('-v', '--version', dest='version', action='store_true', default=False, help="Show version number and exit.")
@@ -88,11 +91,7 @@ def parse_args(argv):
     else:
         output_filename = args.output_filename
     args_dict['output_filename'] = output_filename
-    if args.config_filename is None:
-        config_filename = 'focal.cfg'
-    else:
-        config_filename = args.config_filename
-    args_dict['config_filename'] = config_filename
+    args_dict['config_filename'] = args.config_filename
     args_dict['output_format'] = args.output_format
     return args_dict
 
@@ -114,6 +113,8 @@ def read_input(input_filename):
 
 def execute_queries(config_dict, input_dict):
     print("Executing database queries.")
+    if (debug):
+        start_time = timeit.default_timer()
     try:
         if config_dict['type'].lower()=='mysql':
             conn = pymysql.connect(host=config_dict["host"], user=config_dict["user"], passwd=config_dict["password"], db=config_dict['db'])
@@ -147,9 +148,14 @@ def execute_queries(config_dict, input_dict):
         print(e)
         sys.exit(utilities.ExitCodes.DATABASE_COMMAND_ERROR)
     res = cur.fetchall()
-    #Results length 0 isn't necessarily an error
+    #Results length 0 isn't necessarily an error, but let the user know
+    if len(res)==0:
+        print("No entries found in the database which match all filters.")
     cur.close()
     conn.close()
+    if (debug):
+        end_time = timeit.default_timer()
+        print("Database query took %f sec." % (end_time-start_time))
     return res
 
 #If data product is seismograms, write a url file and calculate data size
@@ -179,6 +185,9 @@ def write_url_file(args_dict, input_dict, config_dict, result_set):
         track_file_size = False
     for row in result_set:
         study_name = row['Study_Name']
+        if study_name not in globus_dict:
+            print("Not sure where to download seismograms from for study %s, aborting." % study_name, file=sys.stderr)
+            sys.exit(utilities.ExitCodes.DATABASE_CONNECTION_ERROR)
         study_prefix = globus_dict[study_name]
         study_suffix = ".grm"
         rv_seis_size = utilities.get_rv_seismogram_size(study_name)
@@ -204,7 +213,7 @@ def write_url_file(args_dict, input_dict, config_dict, result_set):
                 cur.execute(num_rvs_query)
                 (study_name, num_rvs) = cur.fetchone()
                 temp_disk_space_mb += num_rvs*rv_seis_size/(1000000.0)
-    if track_file_size==True:
+    if track_file_size==True and len(result_set)>0:
         conn.close()
         output_disk_space_mb = rv_seis_size*len(result_set)/(1000000.0)
         print("Temporary disk space required to download seismograms: %.1f MB" % (temp_disk_space_mb))

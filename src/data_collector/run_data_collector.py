@@ -159,7 +159,7 @@ def delete_temp_files(temp_directory, local_filenames):
     print("Removing temporary files from %s." % temp_directory)
     #Just make sure they start with 'Seismogram' and end with '.grm'
     for f in local_filenames:
-        if f.find('Seismogram')==0 and f[-4:]=='.grm':
+        if f.find('Seismogram')>-1 and f[-4:]=='.grm':
             os.remove(f)
 
 def run_main(argv):
