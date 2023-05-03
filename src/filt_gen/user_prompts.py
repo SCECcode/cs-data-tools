@@ -270,7 +270,8 @@ def get_user_input(model_list, dp_list, filter_list):
     #Filter(s)
     selected_filters = choose_filters(filter_list, selected_dp, selected_model)
     #Optional sort
-    choose_sort(selected_filters)
+    if len(selected_filters)>0:
+        choose_sort(selected_filters)
     print("\nYou have generated the following data product request:\n")
     print("Model:")
     print("\t%s" % selected_model.get_name())
