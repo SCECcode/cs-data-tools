@@ -281,7 +281,7 @@ def create_filters():
 	filters = []
 	#IM type
 	im_type_filter = EnumeratedFilter('Intensity Measure Period', filt_type=float, data_product=FilterDataProducts.IMS, help_string="Type of intensity measure.")
-	im_type_filter.set_values_list([2.0, 3.0, 4.0, 5.0, 7.5, 10.0])
+	im_type_filter.set_values_list([2.0, 3.0, 4.0, 5.0, 7.5, 10.0, "PGV"])
 	im_type_filter.set_query(fields=["IM_Types.IM_Type_Value"], tables=["IM_Types"])
 	filters.append(im_type_filter)
 	#IM value
@@ -300,7 +300,7 @@ def create_filters():
 	sites_filter.set_query(fields=["CyberShake_Sites.CS_Short_Name"], tables=['CyberShake_Sites'])
 	filters.append(sites_filter)
 	#Site-Rupture dist
-	site_rup_dist_filter = RangeFilter('Site-Rupture Distance', filt_type=float, data_product=FilterDataProducts.EVENTS, help_string="Site-rupture distance, which is determined by calculating the distance between the site and each point on the rupture surface and taking the minimum.")
+	site_rup_dist_filter = RangeFilter('Site-Rupture Distance', filt_type=float, data_product=FilterDataProducts.EVENTS, help_string="Site-rupture distance, which is determined by calculating the distance between the site and each point on the rupture surface and taking the minimum.", units="km")
 	site_rup_dist_filter.set_range(min=0.0, max=200.0)
 	site_rup_dist_filter.set_query(fields=["CyberShake_Site_Ruptures.Site_Rupture_Dist"], tables=["CyberShake_Site_Ruptures"])
 	site_rup_dist_filter.add_required_filter(sites_filter)
