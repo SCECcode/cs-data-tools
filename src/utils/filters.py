@@ -215,8 +215,8 @@ class Filter:
 #Class for a filter which has a preset list of possible values - checks user input
 class EnumeratedFilter(Filter):
 	
-	def __init__(self, name, filt_type=None, values_list=None, data_product=None, help_string=""):
-		super().__init__(name, filt_type=filt_type, data_product=data_product, help_string=help_string)
+	def __init__(self, name, filt_type=None, values_list=None, data_product=None, help_string="", units=None):
+		super().__init__(name, filt_type=filt_type, data_product=data_product, help_string=help_string, units=units)
 		self.values_list = values_list
 
 	def set_values_list(self, values_list=None):
@@ -244,8 +244,8 @@ class EnumeratedFilter(Filter):
 #Class for a filter which has a range of possible values - checks user input
 class RangeFilter(Filter):
 
-	def __init__(self, name, filt_type=None, min=-1e99, max=1e99, data_product=None, help_string=""):
-		super().__init__(name, filt_type=filt_type, data_product=data_product, help_string=help_string)
+	def __init__(self, name, filt_type=None, min=-1e99, max=1e99, data_product=None, help_string="", units=None):
+		super().__init__(name, filt_type=filt_type, data_product=data_product, help_string=help_string, units=units)
 		self.min = min
 		self.max = max
 		self.value = None
