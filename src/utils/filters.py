@@ -98,6 +98,8 @@ class Filter:
 		self.help_string = help_string
 		self.sort = 0
 		self.units = units
+		#Other filters which must also be added if this filter is added
+		self.requires_filters = []
 
 	def get_name(self):
 		return self.name
@@ -110,6 +112,12 @@ class Filter:
 
 	def get_units(self):
 		return self.units
+
+	def add_required_filter(self, required_filter):
+		self.requires_filters.append(required_filter)
+
+	def get_required_filters(self):
+		return self.requires_filters
 
 	#The joins required to select on this filter
 	def set_query(self, fields=[], tables=[], contains=False):
@@ -279,6 +287,7 @@ def create_filters():
 	#IM value
 	im_value_filter = Filter('Intensity Measure Value', filt_type=float, data_product=FilterDataProducts.IMS, help_string="Value of intensity measure, in cm/s2.", units='cm/sec2')
 	im_value_filter.set_query(fields=["PeakAmplitudes.IM_Value"], tables=["PeakAmplitudes"])
+	im_value_filter.add_required_filter(im_type_filter)
 	filters.append(im_value_filter)
 	#Magnitude
 	mag_filter = RangeFilter('Magnitude', filt_type=float, data_product=FilterDataProducts.EVENTS, help_string="Magnitude of the earthquake.")
@@ -291,10 +300,11 @@ def create_filters():
 	sites_filter.set_query(fields=["CyberShake_Sites.CS_Short_Name"], tables=['CyberShake_Sites'])
 	filters.append(sites_filter)
 	#Site-Rupture dist
-	#site_rup_dist_filter = RangeFilter('Site-Rupture Distance', filt_type=float, data_product=FilterDataProducts.EVENTS, help_string="Site-rupture distance, which is determined by calculating the distance between the site and each point on the rupture surface and taking the minimum.")
-	#site_rup_dist_filter.set_range(min=0.0, max=200.0)
-	#site_rup_dist_filter.set_query(fields=["CyberShake_Site_Ruptures.Site_Rupture_Dist"], tables=["CyberShake_Site_Ruptures"])
-	#filters.append(site_rup_dist_filter)
+	site_rup_dist_filter = RangeFilter('Site-Rupture Distance', filt_type=float, data_product=FilterDataProducts.EVENTS, help_string="Site-rupture distance, which is determined by calculating the distance between the site and each point on the rupture surface and taking the minimum.")
+	site_rup_dist_filter.set_range(min=0.0, max=200.0)
+	site_rup_dist_filter.set_query(fields=["CyberShake_Site_Ruptures.Site_Rupture_Dist"], tables=["CyberShake_Site_Ruptures"])
+	site_rup_dist_filter.add_required_filter(sites_filter)
+	filters.append(site_rup_dist_filter)
 	#Probability
 	#prob_filter = RangeFilter('Rupture Probability', filt_type=float, help_string="The probability of the rupture occuring, as specified by the ERF.  Note that if the rupture has multiple rupture variations, this probability will be distributed among the rupture variations.")
 	#prob_filter.set_range(min=0.0, max=1.0)

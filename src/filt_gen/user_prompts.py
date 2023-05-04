@@ -218,6 +218,12 @@ def choose_filters(filter_list, selected_dp, selected_model):
             selected_filt = choose_filter_value(selected_filt)
             selected_filters.append(selected_filt)
             remaining_filter_list.remove(selected_filt)
+            #Also need to prompt for any required filters
+            for s in selected_filt.get_required_filters():
+                print("\nSince you selected the %s filter, you also need to use the %s filter." % (selected_filt.get_name(), s.get_name()))
+                s = choose_filter_value(s)
+                selected_filters.append(s)
+                remaining_filter_list.remove(s)
             continue
     return selected_filters
 
