@@ -59,6 +59,7 @@ class Query:
                     'Prob',
                     'IM_Type_Value',
                     'IM_Type_Component',
+                    'IM_Type_Measure',
                     'IM_Value',
                     'Units',
                     'Start_Lat',
@@ -77,6 +78,10 @@ class Query:
         for s in select_fields:
             self.select_fields.add(s)
 
+    def remove_select(self, select_fields):
+        for s in select_fields:
+            self.select_fields.remove(s)
+
     def add_from(self, from_fields):
         for f in from_fields:
             self.from_tables.add(f)
@@ -84,6 +89,11 @@ class Query:
     def add_where(self, where_fields):
         for w in where_fields:
             self.where_clauses.add(w)
+
+    def remove_where(self, where_fields):
+        for w in where_fields:
+            if w in self.where_clauses:
+                self.where_clauses.remove(w)
 
     def set_sort(self, sort_clause):
         self.sort = sort_clause
@@ -211,7 +221,7 @@ def construct_queries(model, dp, filter_list):
     query.add_select(metadata_select)
     query.add_from(metadata_from)
     for f in filter_list:
-        #If we're filtering on IMs, restrict to RotD50
+        #If we're filtering on IMs, restrict to RotD50, unless it's PGA or PGV
         if f.get_data_product()==filters.FilterDataProducts.IMS:
             query.add_from(["IM_Types"])
             query.add_where(["IM_Types.IM_Type_Component='RotD50'"])
@@ -226,13 +236,21 @@ def construct_queries(model, dp, filter_list):
             if f.get_contains()==True:
                 query.add_where(["%s LIKE %s%%%s%%%s" % (where_fields[0], quote, f.get_value(), quote)])
             else:
-                query.add_where(["%s=%s%s%s" % (where_fields[0], quote, f.get_value(), quote)])
+                #Check for PGA, PGV - if so, remove the RotD50 match, use 'IM_Type_Measure' for the where,
+                #and change the select from IM_Types.IM_Type_Value and IM_Types.IM_Type_Component to IM_Types.IM_Type_Measure
+                if f.get_name()=="Intensity Measure Period" and (f.get_value()=='PGA' or f.get_value()=='PGV'):
+                    query.remove_select(['IM_Types.IM_Type_Value','IM_Types.IM_Type_Component'])
+                    query.add_select(['IM_Types.IM_Type_Measure'])
+                    query.remove_where(["IM_Types.IM_Type_Component='RotD50'"])
+                    query.add_where(["IM_Type_Measure='%s'" % f.get_value()])
+                else:
+                    query.add_where(["%s=%s%s%s" % (where_fields[0], quote, f.get_value(), quote)])
         elif fp==filters.FilterParams.MULTIPLE_VALUES:
             where_clauses = []
             for v in f.get_values():
                 if f.get_contains()==True:
                     where_clauses.append(["%s LIKE %s%%%s%%%s" % (where_fields[0], quote, v, quote)])
-                else: 
+                else:
                     where_clauses.append("%s=%s%s%s" % (where_fields[0], quote, v, quote))
             query.add_where(["(%s)" % " or ".join(where_clauses)])
         elif fp==filters.FilterParams.VALUE_RANGE:

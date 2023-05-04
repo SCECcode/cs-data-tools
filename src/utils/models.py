@@ -68,9 +68,9 @@ def create_models():
     #model1.set_periods([0.1, 0.2, 0.5, 1.0, 2.0, 3.0, 4.0, 5.0, 7.5, 10.0])
     #model_list.append(model1)
     model2 = Model('Study 22.12 LF')
-    model2.set_periods([2.0, 3.0, 4.0, 5.0, 7.5, 10.0])
+    model2.set_periods([2.0, 3.0, 4.0, 5.0, 7.5, 10.0, "PGV"])
     model_list.append(model2)
     model3 = Model('Study 22.12 BB')
-    model3.set_periods([0.01, 0.02, 0.03, 0.04, 0.05, 0.075, 0.1, 0.2, 0.3, 0.4, 0.5, 0.75, 1, 2, 3, 4, 5, 7.5, 10])
+    model3.set_periods([0.01, 0.02, 0.03, 0.04, 0.05, 0.075, 0.1, 0.2, 0.3, 0.4, 0.5, 0.75, 1, 2, 3, 4, 5, 7.5, 10, "PGV", "PGA"])
     model_list.append(model3)
     return model_list

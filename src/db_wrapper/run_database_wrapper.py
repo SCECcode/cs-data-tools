@@ -150,7 +150,7 @@ def execute_queries(config_dict, input_dict):
     res = cur.fetchall()
     #Results length 0 isn't necessarily an error, but let the user know
     if len(res)==0:
-        print("No entries found in the database which match all filters.")
+        print("No entries found in the database which match all filters.\n")
     cur.close()
     conn.close()
     if (debug):

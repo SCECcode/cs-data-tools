@@ -128,29 +128,46 @@ def choose_filter_value(filter):
             try:
                 value_obj = filter.get_type()(value)
             except ValueError:
-                print("%s filter requires values of type %s." % (filter.get_name(), str(filter.get_type())))
-                continue
+                #Check and see if the filter is Intensity Measure Value and we're trying to use PGA or PGV.
+                if filter.get_name()=="Intensity Measure Period" and (value=="PGA" or value=="PGV"):
+                    #We permit this
+                    value_obj = str(value)
+                else:
+                    print("%s filter requires values of type %s." % (filter.get_name(), str(filter.get_type())))
+                    continue
             if filter.set_value(value_obj)!=0:
                 continue
             break
     elif value_type_choice_int==filters.FilterParams.MULTIPLE_VALUES:
-        while True:
+        exit_loop = False
+        while not exit_loop:
             input_string = "What values (comma-separated) do you want to use? "
             if filter.get_units() is not None:
                 input_string = "What values (comma-separated) do you want to use (units %s)? " % filter.get_units()
             values = input(input_string)
             pieces = values.split(',')
             value_list = []
+            good_input = True
             for p in pieces:
                 try:
                     value_obj = filter.get_type()(p.strip())
                 except ValueError:
-                    print("%s filter requires values of type %s." % (filter.get_name(), str(filter.get_type())))
-                    continue
+                    #Check and see if the filter is Intensity Measure Value and we're trying to use PGA or PGV.
+                    if filter.get_name()=="Intensity Measure Period" and (p.strip()=="PGA" or p.strip()=="PGV"):
+                        #We don't support mixing PGA/PGV with other IMs, but explain this.
+                        print("Currently we don't support combining %s with other intensity measures.  Please submit separate data requests instead." % p.strip())
+                        good_input = False
+                        break #pieces loop
+                    else:
+                        print("%s filter requires values of type %s." % (filter.get_name(), filter.get_type().__name__))
+                        good_input = False
+                        break #pieces loop
                 value_list.append(value_obj)
-            if filter.set_values(value_list)!=0:
-                continue
-            break
+            if good_input==True:
+                if filter.set_values(value_list)!=0:
+                    continue # values loop
+                else:
+                    exit_loop = True
     elif value_type_choice_int==filters.FilterParams.VALUE_RANGE:
         while True:
             input_string = "What range do you want to use? Specify as min, max: "
@@ -220,6 +237,8 @@ def choose_filters(filter_list, selected_dp, selected_model):
             remaining_filter_list.remove(selected_filt)
             #Also need to prompt for any required filters
             for s in selected_filt.get_required_filters():
+                if s in selected_filters:
+                    continue
                 print("\nSince you selected the %s filter, you also need to use the %s filter." % (selected_filt.get_name(), s.get_name()))
                 s = choose_filter_value(s)
                 selected_filters.append(s)
