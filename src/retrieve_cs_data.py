@@ -97,21 +97,21 @@ def run_filter_generator(args_dict):
         arg_string = "%s -pl" % arg_string
     if args_dict['debug']==True:
         arg_string = "%s -d" % arg_string
-    arg_string = "%s -o csdata.%s.json" % (arg_string, args_dict['request_label'])
+    arg_string = "%s -o %s/csdata.%s.json" % (arg_string, args_dict['output_directory'], args_dict['request_label'])
     filt_gen.run_filter_generator.run_main(arg_string.split())
 
 def run_query_builder(args_dict):
     if args_dict['input_filename'] is not None:
         arg_string = '-i %s' % (args_dict['input_filename'])
     else:
-        arg_string = '-i csdata.%s.json' % (args_dict['request_label'])
+        arg_string = '-i %s/csdata.%s.json' % (args_dict['output_directory'], args_dict['request_label'])
     if args_dict['debug']==True:
         arg_string = "%s -d" % arg_string
-    arg_string = "%s -o csdata.%s.query" % (arg_string, args_dict['request_label'])
+    arg_string = "%s -o %s/csdata.%s.query" % (arg_string, args_dict['output_directory'], args_dict['request_label'])
     query_build.run_query_builder.run_main(arg_string.split())
 
 def run_database_wrapper(args_dict):
-    arg_string = "-i csdata.%s.query -o csdata.%s.data -c %s" % (args_dict['request_label'], args_dict['request_label'], args_dict['config_filename'])
+    arg_string = "-i %s/csdata.%s.query -o %s/csdata.%s.data -c %s" % (args_dict['output_directory'], args_dict['request_label'], args_dict['output_directory'], args_dict['request_label'], args_dict['config_filename'])
     if args_dict['debug']==True:
         arg_string = "%s -d" % arg_string
     db_wrapper.run_database_wrapper.run_main(arg_string.split())

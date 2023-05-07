@@ -281,7 +281,7 @@ def create_filters():
 	filters = []
 	#IM type
 	im_type_filter = EnumeratedFilter('Intensity Measure Period', filt_type=float, data_product=FilterDataProducts.IMS, help_string="Type of intensity measure.")
-	im_type_filter.set_values_list([2.0, 3.0, 4.0, 5.0, 7.5, 10.0, "PGV"])
+	#im_type_filter.set_values_list([2.0, 3.0, 4.0, 5.0, 7.5, 10.0, "PGV"])
 	im_type_filter.set_query(fields=["IM_Types.IM_Type_Value"], tables=["IM_Types"])
 	filters.append(im_type_filter)
 	#IM value

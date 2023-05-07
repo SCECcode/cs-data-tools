@@ -116,7 +116,7 @@ def create_data_products():
     dp_intensity_measures.set_metadata_query(fields=["CyberShake_Sites.CS_Short_Name", "PeakAmplitudes.Run_ID", "PeakAmplitudes.Source_ID", "PeakAmplitudes.Rupture_ID", "PeakAmplitudes.Rup_Var_ID", "Ruptures.Mag", "Ruptures.Prob", "Ruptures.Source_Name", "IM_Types.IM_Type_Value", "IM_Types.IM_Type_Component", "IM_Types.Units"], tables=["CyberShake_Sites", "PeakAmplitudes", "Ruptures", "IM_Types"])
     dp_list.append(dp_intensity_measures)
     #Events
-    dp_events = DataProducts('Events', requires_file=False, relevant_filters=[filters.FilterDataProducts.SITES, filters.FilterDataProducts.EVENTS], help_string="Metadata about individual events.", distinct=True)
+    dp_events = DataProducts('Event Info', requires_file=False, relevant_filters=[filters.FilterDataProducts.SITES, filters.FilterDataProducts.EVENTS], help_string="Metadata about individual events.", distinct=True)
     dp_events.set_metadata_query(fields=["Ruptures.Source_ID", "Ruptures.Rupture_ID", "Ruptures.Source_Name", "Ruptures.Mag", "Ruptures.Prob", "Ruptures.Start_Lat", "Ruptures.Start_Lon", "Ruptures.End_Lat", "Ruptures.End_Lon", "Rupture_Variations.Rup_Var_ID"], tables=["Ruptures", "Rupture_Variations", "CyberShake_Site_Ruptures"])
     dp_list.append(dp_events)
     #Durations

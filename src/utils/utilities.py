@@ -76,9 +76,10 @@ def get_field_alias(field):
 		#Create
 		field_aliases = dict()
 		field_aliases['CS_Short_Name'] = 'Site_Name'
+		field_aliases['CS_Site_Name'] = 'Site_Long_Name'
 		field_aliases['CS_Site_Lon'] = "Site_Longitude"
 		field_aliases['CS_Site_Lat'] = "Site_Latitude"
-		field_aliases['Prob'] = 'Probability'
+		field_aliases['Prob'] = 'Rupture_Probability'
 		field_aliases['Mag'] = 'Magnitude'
 		field_aliases['IM_Type_Value'] = 'Period'
 		field_aliases['IM_Type_Component'] = 'Component'
