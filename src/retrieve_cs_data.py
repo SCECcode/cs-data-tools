@@ -131,7 +131,7 @@ def run_main():
         run_filter_generator(args_dict)
     run_query_builder(args_dict)
     run_database_wrapper(args_dict)
-    url_file = 'csdata.%s.urls' % (args_dict['request_label'])
+    url_file = '%s/csdata.%s.urls' % (args_dict['output_directory'], args_dict['request_label'])
     #By checking if this file exists, we're checking both that we want seismograms and also that the storage requirements are low enough.
     if os.path.exists(url_file):
         run_data_collector(args_dict, url_file)
