@@ -124,6 +124,9 @@ def run_data_collector(args_dict, url_file):
 
 def run_main():
     args_dict = parse_args()
+    if args_dict['output_directory'] is not None:
+        if not os.path.exists(args_dict['output_directory']):
+            os.makedirs(args_dict['output_directory'])
     if args_dict['input_filename'] is None:
         run_filter_generator(args_dict)
     run_query_builder(args_dict)

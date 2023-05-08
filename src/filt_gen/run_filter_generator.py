@@ -60,7 +60,6 @@ def parse_args(argv):
 	parser.add_argument('-fl', '--filter-list', dest='print_filters', action='store_true', default=False, help="Print information about available filters and exit.")
 	parser.add_argument('-pl', '--products-list', dest='print_products', action='store_true', default=False, help="Print information about available data products and exit.")
 	parser.add_argument('-o', '--output-filename', dest='output_filename', action='store', default=None, help="Path to JSON file describing the data request.")
-	parser.add_argument('-no', '--no-output-file', dest='write_output', action='store_false', default=True, help="Don't write an output JSON file.")
 	parser.add_argument('-d', '--debug', dest='debug', action='store_true', default=False, help='Turn on debug statements.')
 	parser.add_argument('-v', '--version', dest='version', action='store_true', default=False, help="Show version number and exit.")
 	args = parser.parse_args(args=argv)
@@ -84,19 +83,13 @@ def parse_args(argv):
 	if exit==True:
 		sys.exit(utilities.ExitCodes.NO_ERROR)
 	if args.output_filename is not None:
-		if args.write_output is False:
-			print("Both --output-filename and --no-output-file were specified.  Please only select one.  Aborting.")
-			sys.exit(utilities.ExitCodes.INVALID_ARGUMENTS)
 		output_filename = args.output_filename
 		#Add json extension
 		if output_filename[-5:]!='.json':
 			output_filename = "%s.json" % output_filename
-	elif args.write_output is True:
+	else:
 		dt_tuple = datetime.datetime.now().timetuple()
 		output_filename = "csdata.%02d%02d%02d_%02d%02d%04d.json" % (dt_tuple.tm_hour, dt_tuple.tm_min, dt_tuple.tm_sec, dt_tuple.tm_mon, dt_tuple.tm_mday, dt_tuple.tm_year)
-	else:
-		#args.write_output is false, and output_filename wasn't set
-		output_filename = None
 	args_dict['output_filename'] = output_filename
 	return args_dict
 

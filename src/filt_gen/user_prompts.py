@@ -104,7 +104,7 @@ def choose_filter_value(filter):
             try:
                 #RangeFilter?
                 (min_val, max_val) = filter.get_range()
-                print("Valid values are [%f, %f]." % (min_val, max_val))
+                print("Valid values are between [%f, %f]." % (min_val, max_val))
                 continue
             except:
                 pass
@@ -115,7 +115,10 @@ def choose_filter_value(filter):
                 continue
             except:
                 pass
-            print("No restrictions on values.")
+            if (filter.is_numeric()):
+                print("Valid values are numbers.")
+            else:
+                print("Valid values are strings.")
             continue
         elif value_type_choice_int>=0:
             break

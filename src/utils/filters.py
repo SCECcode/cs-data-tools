@@ -285,7 +285,8 @@ def create_filters():
 	im_type_filter.set_query(fields=["IM_Types.IM_Type_Value"], tables=["IM_Types"])
 	filters.append(im_type_filter)
 	#IM value
-	im_value_filter = Filter('Intensity Measure Value', filt_type=float, data_product=FilterDataProducts.IMS, help_string="Value of intensity measure, in cm/s2.", units='cm/sec2')
+	im_value_filter = RangeFilter('Intensity Measure Value', filt_type=float, data_product=FilterDataProducts.IMS, help_string="Value of intensity measure, in cm/s2.", units='cm/sec2')
+	im_value_filter.set_range(min=0.0, max=10000.0)
 	im_value_filter.set_query(fields=["PeakAmplitudes.IM_Value"], tables=["PeakAmplitudes"])
 	im_value_filter.add_required_filter(im_type_filter)
 	filters.append(im_value_filter)
