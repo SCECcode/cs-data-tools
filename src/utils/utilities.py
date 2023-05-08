@@ -36,7 +36,7 @@ import sys
 import os
 import json
 
-VERSION = "1.0.0_04282023"
+VERSION = "1.0.0_05072023"
 
 class ExitCodes:
 
