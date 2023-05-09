@@ -57,6 +57,7 @@ def parse_args():
     parser.add_argument('-o', '--output-directory', dest='output_directory', action='store', default=".", help="Path to output directory to store files in (optional, default is current working directory).")
     parser.add_argument('-t', '--temp-directory', dest='temp_directory', action='store', default=".", help="Path to temporary directory to store files before extraction (optional, default is current working directory).")
     parser.add_argument('-i', '--input-filename', dest='input_filename', action='store', default=None, help="Path to JSON file describing desired data products and filters to apply, in format outputted by Filter Generator step.  If supplied, Filter Generator is bypassed.  (optional)")
+    parser.add_argument('-of', '--output-format', dest='output_format', action='store', default='csv', help='Output format for database results (either "csv" or "sqlite")')
     parser.add_argument('-d', '--debug', dest='debug', action='store_true', default=False, help='Turn on debug statements.')
     parser.add_argument('-v', '--version', dest='version', action='store_true', default=False, help="Show version number and exit.")
     args_dict = dict()
@@ -87,6 +88,7 @@ def parse_args():
     args_dict['temp_directory'] = args.temp_directory
     args_dict['input_filename'] = args.input_filename
     args_dict['debug'] = args.debug
+    args_dict['output_format'] = args.output_format
     return args_dict
 
 def run_filter_generator(args_dict):
@@ -111,7 +113,7 @@ def run_query_builder(args_dict):
     query_build.run_query_builder.run_main(arg_string.split())
 
 def run_database_wrapper(args_dict):
-    arg_string = "-i %s/csdata.%s.query -o %s/csdata.%s.data -c %s" % (args_dict['output_directory'], args_dict['request_label'], args_dict['output_directory'], args_dict['request_label'], args_dict['config_filename'])
+    arg_string = "-of %s -i %s/csdata.%s.query -o %s/csdata.%s.data -c %s" % (args_dict['output_format'], args_dict['output_directory'], args_dict['request_label'], args_dict['output_directory'], args_dict['request_label'], args_dict['config_filename'])
     if args_dict['debug']==True:
         arg_string = "%s -d" % arg_string
     db_wrapper.run_database_wrapper.run_main(arg_string.split())
