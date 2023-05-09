@@ -12,4 +12,4 @@ csdatarequest.Seis.urls
 csdatarequest.site_name.data
 csdatarequest.site_name.query
 csdata.*
-.vscode/tasks.json
+.vscode/*
