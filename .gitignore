@@ -13,3 +13,4 @@ csdatarequest.site_name.data
 csdatarequest.site_name.query
 csdata.*
 .vscode/*
+sample_event_list.csv

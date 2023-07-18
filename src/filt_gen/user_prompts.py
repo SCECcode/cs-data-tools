@@ -42,6 +42,7 @@ sys.path.append(path_add)
 
 import utils.data_products as data_products
 import utils.filters as filters
+import utils.utilities as utilities
 
 #Will return a negative number if the input is not valid
 #Otherwise, returns int with value
@@ -289,13 +290,41 @@ def choose_sort(selected_filters):
             break
 
 
-def get_user_input(model_list, dp_list, filter_list):
+def get_user_input(model_list, dp_list, filter_list, input_event_filename=None):
     print("Welcome to the CyberShake Data Access tool.\n")
     #Model
     selected_model = choose_model(model_list)
     #Data product
     selected_dp = choose_data_product(dp_list)
     #Filter(s)
+    event_list = None
+    if input_event_filename is not None:
+        #Read in events from file
+        event_list = []
+        try:
+            with open(input_event_filename, 'r') as fp_in:
+                data = fp_in.readlines()
+                fp_in.close()
+                for line in data:
+                    pieces = line.strip().split(",")
+                    if len(pieces)<3:
+                        print("Error parsing CSV event list file %s.\nThis file should be in the format <src id>,<rup id>,<rup var id>." % input_event_filename, file=sys.stderr)
+                        sys.exit(utilities.ExitCodes.FILE_PARSING_ERROR)
+                    event_list.append((int(pieces[0]), int(pieces[1]), int(pieces[2])))
+        except Exception as e:
+            print("Error reading from input file %s, aborting." % input_event_filename, file=sys.stderr)
+            print(e)
+            sys.exit(utilities.ExitCodes.BAD_FILE_PATH)
+        #Check event list length
+        if len(event_list)>utilities.MAX_EVENT_LIST_LENGTH:
+            print("The event file %s contains %d events, which is greater than the maximum allowed event list length of %d." % (input_event_filename, len(event_list), utilities.MAX_EVENT_LIST_LENGTH), file=sys.stderr)
+            sys.exit(utilities.ExitCodes.FILE_PARSING_ERROR)
+        #Remove event filters from filter_list for asking
+        edited_filter_list = []
+        for f in filter_list:
+            if not f.get_data_product()==filters.FilterDataProducts.EVENTS:
+                edited_filter_list.append(f)
+        filter_list = edited_filter_list    
     selected_filters = choose_filters(filter_list, selected_dp, selected_model)
     #Optional sort
     if len(selected_filters)>0:
@@ -316,6 +345,10 @@ def get_user_input(model_list, dp_list, filter_list):
                 print("\t%s, sort ascending" % s.get_filter_string())
             else:
                 print("\t%s" % s.get_filter_string())
-    return (selected_model, selected_dp, selected_filters)
+    if event_list is not None:
+        print("\nEvents specified in file:")
+        for e in event_list:
+            print("\tSrc %d, Rup %d, RV %d" % (e[0], e[1], e[2]))
+    return (selected_model, selected_dp, selected_filters, event_list)
     
 

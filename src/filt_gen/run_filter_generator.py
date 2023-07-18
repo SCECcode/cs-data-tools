@@ -60,6 +60,7 @@ def parse_args(argv):
 	parser.add_argument('-fl', '--filter-list', dest='print_filters', action='store_true', default=False, help="Print information about available filters and exit.")
 	parser.add_argument('-pl', '--products-list', dest='print_products', action='store_true', default=False, help="Print information about available data products and exit.")
 	parser.add_argument('-o', '--output-filename', dest='output_filename', action='store', default=None, help="Path to JSON file describing the data request.")
+	parser.add_argument('-e', '--input-event-filename', dest='input_event_filename', action='store', default=None, help="(Optional) path to CSV file containing src id, rup id, rup var id values.  This will bypass the event filters.")
 	parser.add_argument('-d', '--debug', dest='debug', action='store_true', default=False, help='Turn on debug statements.')
 	parser.add_argument('-v', '--version', dest='version', action='store_true', default=False, help="Show version number and exit.")
 	args = parser.parse_args(args=argv)
@@ -82,6 +83,8 @@ def parse_args(argv):
 		print("Version: %s" % utilities.get_version())
 	if exit==True:
 		sys.exit(utilities.ExitCodes.NO_ERROR)
+	if args.input_event_filename is not None:
+		args_dict['input_event_filename'] = args.input_event_filename
 	if args.output_filename is not None:
 		output_filename = args.output_filename
 		#Add json extension
@@ -109,10 +112,14 @@ def load_data():
 		print("No filters available, aborting.", file=sys.stderr)
 		sys.exit(utilities.ExitCodes.NO_FILTERS)
 
-def prompt_user():
-	return user_prompts.get_user_input(model_list, dp_list, filter_list)
+def prompt_user(args_dict):
+	if 'input_event_filename' in args_dict:
+		input_event_filename = args_dict['input_event_filename']
+	else:
+		input_event_filename = None
+	return user_prompts.get_user_input(model_list, dp_list, filter_list, input_event_filename=input_event_filename)
 
-def write_filter_file(selected_model, selected_dp, selected_filters, output_filename):
+def write_filter_file(selected_model, selected_dp, selected_filters, event_list, output_filename):
 	if output_filename is None:
 		#Don't write a file
 		return
@@ -122,6 +129,8 @@ def write_filter_file(selected_model, selected_dp, selected_filters, output_file
 	request_dict['model'] = selected_model
 	request_dict['products'] = selected_dp
 	request_dict['filters'] = selected_filters
+	if event_list is not None:
+		request_dict['event_list'] = event_list
 
 	json_obj = json.dumps(request_dict, cls=utilities.CSJSONEncoder, indent=4)
 
@@ -133,8 +142,8 @@ def write_filter_file(selected_model, selected_dp, selected_filters, output_file
 def run_main(argv):
 	args_dict = parse_args(argv)
 	load_data()
-	(selected_model, selected_dp, selected_filters) = prompt_user()
-	write_filter_file(selected_model, selected_dp, selected_filters, args_dict['output_filename'])
+	(selected_model, selected_dp, selected_filters, event_list) = prompt_user(args_dict)
+	write_filter_file(selected_model, selected_dp, selected_filters, event_list, args_dict['output_filename'])
 	print("\nYour data request was written to %s." % args_dict['output_filename'])
 
 if __name__=="__main__":

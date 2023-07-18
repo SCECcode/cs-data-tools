@@ -76,6 +76,17 @@ You can also specify a temporary directory with the '-t' flag.  Since seismogram
 
 ### Advanced Features
 
+#### Event list file
+
+If you already know which events you want, you can provide a CSV-format file with a list of these events using the '-e <event list filename>' command-line argument.
+
+The format for the file is one event per line, in the format
+`<source id>,<rupture id>,<rupture variation id>`
+
+Providing this file will bypass all the event filters (they will not appear in the filter list), but you will still be able to filter on IM values and sites.
+
+Note that there is a limit of 120,000 events in an event list file, due to the maximum length of a MySQL query.
+
 #### Database backend
 
 By default, the tool uses the CyberShake database hosted at moment.usc.edu.  Configuration parameters to connect to this database are specified in db_wrapper/moment.cfg.  If you prefer, you can point the tool to an alternative CyberShake database by creating a new cfg file and using the '-c <config file>' command-line argument, like:

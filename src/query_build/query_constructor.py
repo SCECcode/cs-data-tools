@@ -204,7 +204,7 @@ class Query:
         return added_tables
 
 
-def construct_queries(model, dp, filter_list):
+def construct_queries(model, dp, filter_list, event_list):
     query = Query()
     #Add model
     (from_tables, where_clauses) = model.get_query()
@@ -267,6 +267,15 @@ def construct_queries(model, dp, filter_list):
             #Sort in ascending
             sort_clause = 'order by %s asc' % (f.where_fields[0])
             query.set_sort(sort_clause)
+    #If specific events are specified, add these
+    if event_list is not None:
+        #Use Rupture_Variations table to do the filtering
+        query.add_from(["Rupture_Variations"])
+        where_clauses = []
+        for e in event_list:
+            where_clause = '(Rupture_Variations.Source_ID=%d and Rupture_Variations.Rupture_ID=%d and Rupture_Variations.Rup_Var_ID=%d)' % (e[0], e[1], e[2])
+            where_clauses.append(where_clause)
+        query.add_where(['(%s)' % (" OR ".join(where_clauses))])
     #Need to join any unconnected tables
     query.connect_tables()
     return query

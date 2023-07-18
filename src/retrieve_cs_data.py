@@ -57,6 +57,7 @@ def parse_args():
     parser.add_argument('-o', '--output-directory', dest='output_directory', action='store', default=".", help="Path to output directory to store files in (optional, default is current working directory).")
     parser.add_argument('-t', '--temp-directory', dest='temp_directory', action='store', default=".", help="Path to temporary directory to store files before extraction (optional, default is current working directory).")
     parser.add_argument('-i', '--input-filename', dest='input_filename', action='store', default=None, help="Path to JSON file describing desired data products and filters to apply, in format outputted by Filter Generator step.  If supplied, Filter Generator is bypassed.  (optional)")
+    parser.add_argument('-e', '--input-event-filename', dest='input_event_filename', action='store', default=None, help="(Optional) path to CSV file containing src id, rup id, rup var id values.  This will bypass the event filters.")
     parser.add_argument('-of', '--output-format', dest='output_format', action='store', default='csv', help='Output format for database results (either "csv" or "sqlite")')
     parser.add_argument('-d', '--debug', dest='debug', action='store_true', default=False, help='Turn on debug statements.')
     parser.add_argument('-v', '--version', dest='version', action='store_true', default=False, help="Show version number and exit.")
@@ -89,6 +90,7 @@ def parse_args():
     args_dict['input_filename'] = args.input_filename
     args_dict['debug'] = args.debug
     args_dict['output_format'] = args.output_format
+    args_dict['input_event_filename'] = args.input_event_filename
     return args_dict
 
 def run_filter_generator(args_dict):
@@ -99,6 +101,8 @@ def run_filter_generator(args_dict):
         arg_string = "%s -pl" % arg_string
     if args_dict['debug']==True:
         arg_string = "%s -d" % arg_string
+    if args_dict['input_event_filename'] is not None:
+        arg_string = "%s -e %s" % (arg_string, args_dict['input_event_filename'])
     arg_string = "%s -o %s/csdata.%s.json" % (arg_string, args_dict['output_directory'], args_dict['request_label'])
     filt_gen.run_filter_generator.run_main(arg_string.split())
 

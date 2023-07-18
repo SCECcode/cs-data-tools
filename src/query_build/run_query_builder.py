@@ -139,10 +139,16 @@ def parse_json(input_filename):
                             sys.exit(utilities.ExitCodes.FILE_PARSING_ERROR)
                         selected_filt.set_value_range(values[0], values[1])
                     filters_selected.append(selected_filt)
+    event_list = None
+    if 'event_list' in json_dict:
+        #We specified a list of specific events
+        event_list = []
+        for e in json_dict['event_list']:
+            event_list.append(e)
     if dp_selected is None:
           print("Couldn't find a valid data product in JSON file %s, aborting." % input_filename)
           sys.exit(utilities.ExitCodes.FILE_PARSING_ERROR)
-    return (model_selected, dp_selected, filters_selected)
+    return (model_selected, dp_selected, filters_selected, event_list)
 
 def write_queries(query, input_filename, output_filename, dp_name):
     with open(output_filename, 'w') as fp_out:
@@ -162,8 +168,8 @@ def write_queries(query, input_filename, output_filename, dp_name):
 def run_main(argv):
     (input_filename, output_filename) = parse_args(argv)
     load_data()
-    (model_selected, dp_selected, filters_selected) = parse_json(input_filename)
-    query = query_constructor.construct_queries(model_selected, dp_selected, filters_selected)
+    (model_selected, dp_selected, filters_selected, event_list) = parse_json(input_filename)
+    query = query_constructor.construct_queries(model_selected, dp_selected, filters_selected, event_list)
     write_queries(query, input_filename, output_filename, dp_selected.get_name())
     print("\nYour database queries were written to %s." % output_filename)
 
