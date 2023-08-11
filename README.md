@@ -21,7 +21,7 @@ Current data products supported are:
 
 Current filters supported are:
 * Intensity measure period
-* Intensity measure type
+* Intensity measure value
 * Magnitude
 * Site name
 * Site-rupture distance
