@@ -46,7 +46,10 @@ sys.path.append(path_add)
 
 import utils.utilities as utilities
 
+debug = False
+
 def parse_args(argv):
+    global debug
     parser = argparse.ArgumentParser(prog='Data Collector', description='Takes CyberShake data request URLs, retrieves them, and extracts desired results.')
     parser.add_argument('-i', '--input-filename', dest='input_filename', action='store', default=None, help="Path to file containing the URLs and variation IDs.")
     parser.add_argument('-o', '--output-directory', dest='output_directory', action='store', default=".", help="Path to output directory to store files in.")
@@ -78,10 +81,13 @@ def parse_args(argv):
     if not os.path.exists(temp_directory):
         os.makedirs(temp_directory)
     args_dict['temp_directory'] = temp_directory
+    if args.debug==True:
+        debug = True
     return args_dict
     
 
 def retrieve_files(args_dict):
+    global debug
     input_file = args_dict['input_filename']
     local_filenames = []
     with open(input_file, 'r') as fp_in:
@@ -97,6 +103,8 @@ def retrieve_files(args_dict):
                 os.makedirs(local_directory)
             local_filename = "%s/%s" % (local_directory, basename)
             local_filenames.append(local_filename)
+            if debug:
+                print("File URL: %s" % url)
             url_data = urllib.request.urlopen(url).read()
             with open(local_filename, 'wb') as fp_out:
                 fp_out.write(url_data)

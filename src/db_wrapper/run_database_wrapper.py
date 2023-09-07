@@ -65,12 +65,16 @@ suffix_dict['Study 22.12 BB'] = "_bb"
 
 debug = False
 
+def get_default_config():
+    #Returns path to default config file
+    return "%s/moment.cfg" % (os.path.dirname(os.path.abspath(__file__)))
+
 def parse_args(argv):
     global debug
     parser = argparse.ArgumentParser(prog='Database Wrapper', description='Takes CyberShake data request queries, executes them, and delivers results + paths to on-disk data.')
     parser.add_argument('-i', '--input-filename', dest='input_filename', action='store', default=None, help="Path to query file describing the data request.")
     parser.add_argument('-o', '--output-filename', dest='output_filename', action='store', default=None, help="Path to output file, with query results.")
-    parser.add_argument('-c', "--config-filename", dest='config_filename', action='store', default='moment.cfg', help="Path to database configuration file.")
+    parser.add_argument('-c', "--config-filename", dest='config_filename', action='store', default=None, help="Path to database configuration file.")
     parser.add_argument('-of', '--output-format', dest='output_format', action='store', default='csv', help='Output format for database results (either "csv" or "sqlite")')
     parser.add_argument('-d', '--debug', dest='debug', action='store_true', default=False, help='Turn on debug statements.')
     parser.add_argument('-v', '--version', dest='version', action='store_true', default=False, help="Show version number and exit.")
@@ -90,6 +94,9 @@ def parse_args(argv):
         output_filename = "csdata.%02d%02d%02d_%02d%02d%04d.data" % (dt_tuple.tm_hour, dt_tuple.tm_min, dt_tuple.tm_sec, dt_tuple.tm_mday, dt_tuple.tm_mon, dt_tuple.tm_year)
     else:
         output_filename = args.output_filename
+    if args.config_filename is None:
+        #Set it to the directory this file is in + moment.cfg
+        args.config_filename = get_default_config()
     args_dict['output_filename'] = output_filename
     args_dict['config_filename'] = args.config_filename
     args_dict['output_format'] = args.output_format

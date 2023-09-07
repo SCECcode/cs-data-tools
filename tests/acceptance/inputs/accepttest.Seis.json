@@ -1,0 +1,47 @@
+{
+    "model": {
+        "name": "Study 22.12 LF"
+    },
+    "products": {
+        "name": "Seismograms"
+    },
+    "filters": [
+        {
+            "name": "Intensity Measure Period",
+            "filter_params": 1,
+            "values": [
+                2.0
+            ]
+        },
+        {
+            "name": "Intensity Measure Value",
+            "filter_params": 3,
+            "values": [
+                0.0,
+                12.0
+            ]
+        },
+        {
+            "name": "Magnitude",
+            "filter_params": 2,
+            "values": [
+                7.15,
+                7.25
+            ]
+        },
+        {
+            "name": "Source Name",
+            "filter_params": 1,
+            "values": [
+                "Elsinore"
+            ]
+        },
+        {
+            "name": "Site Name",
+            "filter_params": 1,
+            "values": [
+                "USC"
+            ]
+        }
+    ]
+}

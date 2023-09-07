@@ -1,0 +1,5 @@
+select =  CyberShake_Sites.CS_Short_Name,CyberShake_Sites.CS_Site_Name,CyberShake_Sites.CS_Site_Lon,CyberShake_Sites.CS_Site_Lat
+from = CyberShake_Runs,CyberShake_Sites,Studies
+where = CyberShake_Runs.Site_ID=CyberShake_Sites.CS_Site_ID and CyberShake_Runs.Study_ID=Studies.Study_ID and CyberShake_Sites.CS_Short_Name='USC' and Studies.Study_Name="Study 22.12 LF"
+data_request_file = unittest.site_name.json
+data_product = Site Info

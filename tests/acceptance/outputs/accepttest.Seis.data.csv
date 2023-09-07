@@ -1,0 +1,5 @@
+Study_Name,Run_ID,Site_Name,Source_ID,Rupture_ID,Rupture_Variation_ID,Source_Name,Magnitude,Rupture_Probability,Hypocenter_Lat,Hypocenter_Lon,Hypocenter_Depth
+"Study 22.12 LF",9306,"USC",12,0,144,"Elsinore;J+CM",7.25,7.084097e-06,33.34404,-116.95222,17.4459
+"Study 22.12 LF",9306,"USC",124,261,38,"Elsinore",7.15,7.201653e-07,33.08312,-116.5527,9.85253
+"Study 22.12 LF",9306,"USC",124,262,50,"Elsinore",7.15,7.201653e-07,33.0867,-116.5577,12.2647
+"Study 22.12 LF",9306,"USC",124,266,25,"Elsinore",7.15,7.201653e-07,33.24001,-116.74329,5.11015

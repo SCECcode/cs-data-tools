@@ -48,7 +48,7 @@ import db_wrapper.run_database_wrapper
 import data_collector.run_data_collector
 import utils.utilities as utilities
 
-def parse_args():
+def parse_args(argv):
     parser = argparse.ArgumentParser(prog='CyberShake Data Access Tool', description='Performs CyberShake data retrieval.')
     parser.add_argument('-l', "--request-label", dest='request_label', action='store', default=None, help="Label identifying the request (optional).")
     parser.add_argument('-fl', '--filter-list', dest='print_filters', action='store_true', default=False, help="Print information about available filters and exit.")
@@ -62,7 +62,7 @@ def parse_args():
     parser.add_argument('-d', '--debug', dest='debug', action='store_true', default=False, help='Turn on debug statements.')
     parser.add_argument('-v', '--version', dest='version', action='store_true', default=False, help="Show version number and exit.")
     args_dict = dict()
-    args = parser.parse_args()
+    args = parser.parse_args(args=argv)
     if args.version==True:
         print("Version: %s" % utilities.get_version())
         sys.exit(utilities.ExitCodes.NO_ERROR)
@@ -128,8 +128,8 @@ def run_data_collector(args_dict, url_file):
         arg_string = "%s -d" % arg_string
     data_collector.run_data_collector.run_main(arg_string.split())
 
-def run_main():
-    args_dict = parse_args()
+def run_main(argv):
+    args_dict = parse_args(argv)
     if args_dict['output_directory'] is not None:
         if not os.path.exists(args_dict['output_directory']):
             os.makedirs(args_dict['output_directory'])
@@ -144,4 +144,4 @@ def run_main():
     print("\nData retrieval is complete!")
 
 if __name__=='__main__':
-    run_main()
+    run_main(sys.argv[1:])

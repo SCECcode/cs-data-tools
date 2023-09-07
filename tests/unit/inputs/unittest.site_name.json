@@ -1,0 +1,17 @@
+{
+    "model": {
+        "name": "Study 22.12 LF"
+    },
+    "products": {
+        "name": "Site Info"
+    },
+    "filters": [
+        {
+            "name": "Site Name",
+            "filter_params": 1,
+            "values": [
+                "USC"
+            ]
+        }
+    ]
+}

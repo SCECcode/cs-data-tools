@@ -65,7 +65,10 @@ class Query:
                     'Start_Lat',
                     'Start_Lon',
                     'End_Lat',
-                    'End_Lon']
+                    'End_Lon',
+                    'Hypocenter_Lat',
+                    'Hypocenter_Lon',
+                    'Hypocenter_Depth']
 
     def __init__(self):
         self.select_fields = set()
@@ -106,10 +109,12 @@ class Query:
         return ",".join(self.sort_select())
     
     def get_from_string(self):
-        return ",".join(list(self.from_tables))
+        #Sort in alphabetical order so we know the order for tests
+        return ",".join(sorted(list(self.from_tables)))
     
     def get_where_string(self):
-        return " and ".join(list(self.where_clauses))
+        #Sort in alphabetical order so we know the order for tests
+        return " and ".join(sorted(list(self.where_clauses)))
 
     def get_query_string(self):
         return "select %s from %s where %s" % (self.get_select_string(), self.get_from_string(), self.get_where_string())

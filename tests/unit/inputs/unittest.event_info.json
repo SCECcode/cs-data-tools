@@ -1,0 +1,32 @@
+{
+    "model": {
+        "name": "Study 22.12 LF"
+    },
+    "products": {
+        "name": "Event Info"
+    },
+    "filters": [
+        {
+            "name": "Source Name",
+            "filter_params": 1,
+            "values": [
+                "Elsinore"
+            ]
+        },
+        {
+            "name": "Magnitude",
+            "filter_params": 3,
+            "values": [
+                7.0,
+                7.5
+            ]
+        },
+        {
+            "name": "Site Name",
+            "filter_params": 1,
+            "values": [
+                "USC"
+            ]
+        }
+    ]
+}
