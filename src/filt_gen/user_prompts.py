@@ -302,7 +302,7 @@ def get_user_input(model_list, dp_list, filter_list, input_event_filename=None):
         #Read in events from file
         event_list = []
         try:
-            with open(input_event_filename, 'r') as fp_in:
+            with open(input_event_filename, 'r', encoding='utf-8-sig') as fp_in:
                 data = fp_in.readlines()
                 fp_in.close()
                 for line in data:
