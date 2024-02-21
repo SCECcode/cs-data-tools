@@ -1,2 +1,2 @@
-Site_Name,Site_Long_Name,Site_Longitude,Site_Latitude
-"USC","University of Southern California",-118.286,34.0192
+Site_Name,Site_Long_Name,Site_Longitude,Site_Latitude,Thompson_Vs30,3D_CVM_Vs30,Z1.0,Z2.5
+"USC","University of Southern California",-118.286,34.0192,336.39,295.7,580.0,4100.0

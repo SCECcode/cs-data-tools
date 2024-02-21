@@ -87,6 +87,10 @@ def get_field_alias(field):
 		field_aliases['IM_Type_Value'] = 'Period'
 		field_aliases['IM_Type_Component'] = 'Component'
 		field_aliases['Rup_Var_ID'] = 'Rupture_Variation_ID'
+		field_aliases['Target_Vs30'] = 'Thompson_Vs30'
+		field_aliases['Model_Vs30'] = '3D_CVM_Vs30'
+		field_aliases['Z1_0'] = 'Z1.0'
+		field_aliases['Z2_5'] = 'Z2.5'
 	if field in field_aliases:
 		return field_aliases[field]
 	else:
