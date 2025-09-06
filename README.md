@@ -12,12 +12,13 @@ The CyberShake Data Access tool works by asking the user to interactively specif
 Current CyberShake models supported are:
 * [Study 22.12](https://strike.scec.org/scecpedia/CyberShake_Study_22.12), low-frequency
 * [Study 22.12](https://strike.scec.org/scecpedia/CyberShake_Study_22.12), broadband
+* [Study 24.8](https://strike.scec.org/scecpedia/CyberShake_Study_24.8), low-frequency
 
 Current data products supported are:
 * Site information
 * Event information
 * Intensity measures
-* Seismograms
+* Seismograms (for Study 22.12)
 
 Current filters supported are:
 * Intensity measure period
@@ -139,7 +140,7 @@ Users can submit bug reports or request new features through the [Github issue t
 
 ## Credits
 
-This tool was developed by Scott Callaghan at the Southern California Earthquake Center (SCEC).  The CyberShake data delivered by this tool was produced by the CyberShake collaboration.
+This tool was developed by Scott Callaghan at the Statewide California Earthquake Center (SCEC).  The CyberShake data delivered by this tool was produced by the CyberShake collaboration.
 
 ## Acknowledgements
 
