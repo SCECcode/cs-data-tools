@@ -40,6 +40,7 @@ class Model:
     
     def __init__(self, name):
         self.name = name
+        self.custom_table_dict = dict()
 
     def get_name(self):
         return self.name
@@ -60,17 +61,49 @@ class Model:
 
     def get_periods(self):
         return self.periods
+    
+    #Define available data products, since not all studies support all data products
+    def set_data_products(self, dps):
+        self.data_products = dps
 
+    def get_data_products(self):
+        return self.data_products
+    
+    #Set a custom table name for one of the standard tables
+    #For example, for Study 24.8 use 'PeakAmplitudes_24_8' instead of 'PeakAmplitudes'
+    def set_custom_table_name(self, old_table, new_table):
+        self.custom_table_dict[old_table] = new_table
 
-def create_models():
+    def has_custom_table_name(self):
+        if len(self.custom_table_dict.keys())>0:
+            return True
+        return False
+
+def create_models(dp_list):
     model_list = []
     #model1 = Model('Study 15.12')
     #model1.set_periods([0.1, 0.2, 0.5, 1.0, 2.0, 3.0, 4.0, 5.0, 7.5, 10.0])
     #model_list.append(model1)
     model2 = Model('Study 22.12 LF')
     model2.set_periods([2.0, 3.0, 4.0, 5.0, 7.5, 10.0, "PGV"])
+    model2.set_data_products(dp_list)
     model_list.append(model2)
     model3 = Model('Study 22.12 BB')
     model3.set_periods([0.01, 0.02, 0.03, 0.04, 0.05, 0.075, 0.1, 0.2, 0.3, 0.4, 0.5, 0.75, 1, 2, 3, 4, 5, 7.5, 10, "PGV", "PGA"])
+    model3.set_data_products(dp_list)
     model_list.append(model3)
+    model4 = Model('Study 24.8 LF')
+    model4.set_periods([2.0, 3.0, 4.0, 5.0, 7.5, 10.0, "PGV"])
+    model4_data_products = []
+    for d in dp_list:
+        if d.name != "Seismograms":
+            model4_data_products.append(d)
+    model4.set_data_products(model4_data_products)
+    model4.set_custom_table_name("PeakAmplitudes", "PeakAmplitudes_24_8")
+    model_list.append(model4)
+    #model5 = Model('Study 24.8 BB')
+    #model5.set_periods([0.01, 0.02, 0.03, 0.04, 0.05, 0.075, 0.1, 0.2, 0.3, 0.4, 0.5, 0.75, 1, 2, 3, 4, 5, 7.5, 10, "PGV", "PGA"])
+    #Has the same data products as 24.8 LF
+    #model5.set_data_products(model4_data_products)
+    #model_list.append(model5)
     return model_list

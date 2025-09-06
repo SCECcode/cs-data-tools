@@ -76,14 +76,14 @@ def parse_args(argv):
 	
 def load_data():
     global model_list, dp_list, filter_list
-    model_list = models.create_models()
-    if len(model_list)==0:
-        print("No models available, aborting.", file=sys.stderr)
-        sys.exit(utilities.ExitCodes.NO_MODELS)
     dp_list = data_products.create_data_products()
     if len(dp_list)==0:
         print("No data products available, aborting.", file=sys.stderr)
         sys.exit(utilities.ExitCodes.NO_DATAPRODUCTS)
+    model_list = models.create_models(dp_list)
+    if len(model_list)==0:
+        print("No models available, aborting.", file=sys.stderr)
+        sys.exit(utilities.ExitCodes.NO_MODELS)
     filter_list = filters.create_filters()
     if len(filter_list)==0:
         print("No filters available, aborting.", file=sys.stderr)
@@ -170,6 +170,10 @@ def run_main(argv):
     load_data()
     (model_selected, dp_selected, filters_selected, event_list) = parse_json(input_filename)
     query = query_constructor.construct_queries(model_selected, dp_selected, filters_selected, event_list)
+    #See if we need to use different table names, based on the study
+    if model_selected.has_custom_table_name():
+        for old_name in model_selected.custom_table_dict:
+            query.change_table_name(old_name, model_selected.custom_table_dict[old_name])
     write_queries(query, input_filename, output_filename, dp_selected.get_name())
     print("\nYour database queries were written to %s." % output_filename)
 

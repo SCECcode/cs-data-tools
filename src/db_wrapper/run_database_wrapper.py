@@ -58,6 +58,8 @@ globus_dict = dict()
 globus_dict['Study 15.12'] = "https://g-41ed52.a78b8.36fe.data.globus.org"
 globus_dict['Study 22.12 LF'] = "https://g-be1d0b.a78b8.36fe.data.globus.org"
 globus_dict['Study 22.12 BB'] = "https://g-2d87a9.a78b8.36fe.data.globus.org"
+#No entries for 24.8 yet
+
 
 suffix_dict = dict()
 suffix_dict['Study 15.12'] = "_bb"

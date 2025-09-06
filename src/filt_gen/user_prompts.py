@@ -290,11 +290,12 @@ def choose_sort(selected_filters):
             break
 
 
-def get_user_input(model_list, dp_list, filter_list, input_event_filename=None):
+def get_user_input(model_list, filter_list, input_event_filename=None):
     print("Welcome to the CyberShake Data Access tool.\n")
     #Model
     selected_model = choose_model(model_list)
-    #Data product
+    #Data product - available ones depend on the chosen model
+    dp_list = selected_model.get_data_products()
     selected_dp = choose_data_product(dp_list)
     #Filter(s)
     event_list = None

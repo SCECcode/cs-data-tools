@@ -75,7 +75,7 @@ def parse_args(argv):
 	if args.print_products==True:
 		exit = True
 		load_data()
-		print("These are the available data products.\n")
+		print("These are the available data products.  Note that not all data products may be available for all models.\n")
 		for d in dp_list:
 			print("\t%s: %s" % (d.get_name(), d.get_help_string()))
 	if args.version==True:
@@ -99,14 +99,14 @@ def parse_args(argv):
 
 def load_data():
 	global model_list, dp_list, filter_list
-	model_list = models.create_models()
-	if len(model_list)==0:
-		print("No models available, aborting.", file=sys.stderr)
-		sys.exit(utilities.ExitCodes.NO_MODELS)
 	dp_list = data_products.create_data_products()
 	if len(dp_list)==0:
 		print("No data products available, aborting.", file=sys.stderr)
 		sys.exit(utilities.ExitCodes.NO_DATAPRODUCTS)
+	model_list = models.create_models(dp_list)
+	if len(model_list)==0:
+		print("No models available, aborting.", file=sys.stderr)
+		sys.exit(utilities.ExitCodes.NO_MODELS)
 	filter_list = filters.create_filters()
 	if len(filter_list)==0:
 		print("No filters available, aborting.", file=sys.stderr)
@@ -117,7 +117,7 @@ def prompt_user(args_dict):
 		input_event_filename = args_dict['input_event_filename']
 	else:
 		input_event_filename = None
-	return user_prompts.get_user_input(model_list, dp_list, filter_list, input_event_filename=input_event_filename)
+	return user_prompts.get_user_input(model_list, filter_list, input_event_filename=input_event_filename)
 
 def write_filter_file(selected_model, selected_dp, selected_filters, event_list, output_filename):
 	if output_filename is None:

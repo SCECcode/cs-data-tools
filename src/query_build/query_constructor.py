@@ -129,6 +129,25 @@ class Query:
     def get_distinct(self):
         return self.distinct
 
+    #Performs a find-replace on table names.  This is used when studies use custom tables.
+    def change_table_name(self, old_name, new_name):
+        new_select_fields = set()
+        for field in self.select_fields:
+            new_field = field.replace(old_name, new_name)
+            new_select_fields.add(new_field)
+        self.select_fields = new_select_fields
+        if old_name in self.from_tables:
+            self.from_tables.remove(old_name)
+            self.from_tables.add(new_name)
+        new_where_clauses = set()
+        for clause in self.where_clauses:
+            new_clause = clause.replace(old_name, new_name)
+            new_where_clauses.add(new_clause)
+        self.where_clauses = new_where_clauses
+        if old_name in self.get_sort():
+            new_sort = self.get_sort().replace(old_name, new_name)
+            self.set_sort(new_sort)
+
     #Sorts the select fields into preference order, returns list
     def sort_select(self):
         sorted_select_fields = []
@@ -154,7 +173,7 @@ class Query:
             #Run all combos
             for t in table_list:
                 if t not in connected_list:
-                    #print("Connecting %s and %s." % (working_table, t))
+                    # print("Connecting %s and %s." % (working_table, t))
                     added_tables = self.join_tables(working_table, t)
                     if len(added_tables)>0:
                         table_list.extend(added_tables)
@@ -193,6 +212,9 @@ class Query:
             #CyberShake_Site_Ruptures, Ruptures
             elif table2=="Ruptures":
                 self.add_where(["CyberShake_Site_Ruptures.ERF_ID=Ruptures.ERF_ID", "CyberShake_Site_Ruptures.Source_ID=Ruptures.Source_ID", "CyberShake_Site_Ruptures.Rupture_ID=Ruptures.Rupture_ID"])
+            elif table2=="Studies":
+                self.add_from(["CyberShake_Runs"])
+                self.add_where(["CyberShake_Site_Ruptures.CS_Site_ID=CyberShake_Runs.Site_ID", "CyberShake_Runs.Study_ID=Studies.Study_ID"])
         elif table1=="CyberShake_Sites":
             if table2=="Studies":
                 added_tables.append("CyberShake_Runs")
@@ -210,6 +232,12 @@ class Query:
             #Rupture_Variations, Ruptures
             if table2=="Ruptures":
                 self.add_where(["Rupture_Variations.ERF_ID=Ruptures.ERF_ID", "Rupture_Variations.Source_ID=Ruptures.Source_ID", "Rupture_Variations.Rupture_ID=Ruptures.Rupture_ID"])
+            #Rupture_Variations, Studies -- add Runs table so we can pull in the right Rup_Var_Scenario_ID, and CyberShake_Site_Ruptures to pull in the site IDs
+            elif table2=="Studies":
+                self.add_from(["CyberShake_Runs"])
+                self.add_where(["CyberShake_Runs.Study_ID=Studies.Study_ID", "CyberShake_Runs.Rup_Var_Scenario_ID=Rupture_Variations.Rup_Var_Scenario_ID", "CyberShake_Runs.ERF_ID=Rupture_Variations.ERF_ID"])
+                # self.add_from(["CyberShake_Site_Ruptures"])
+                # self.add_where(["CyberShake_Runs.Site_ID=CyberShake_Site_Ruptures.CS_Site_ID"])
         return added_tables
 
 

@@ -36,7 +36,7 @@ import sys
 import os
 import json
 
-VERSION = "1.0.0_09052023"
+VERSION = "1.1.0_08262025"
 
 #Maximum of 120K events in the event list, because otherwise the MySQL query might be too long
 MAX_EVENT_LIST_LENGTH = 120000
@@ -105,6 +105,10 @@ def get_rv_seismogram_size(study_name):
 	elif study_name=='Study 22.12 LF':
 		nt = 8000
 	elif study_name=='Study 22.12 BB':
+		nt = 40000
+	elif study_name=='Study 24.8 LF':
+		nt = 10000
+	elif study_name=='Study 24.8 BB':
 		nt = 40000
 	return components*nt*sizeof_float + header_size
 
