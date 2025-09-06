@@ -1,0 +1,25 @@
+{
+    "model": {
+        "name": "Study 22.12 LF"
+    },
+    "products": {
+        "name": "Event Info"
+    },
+    "filters": [
+        {
+            "name": "Magnitude",
+            "filter_params": 2,
+            "values": [
+                7.15,
+                7.25
+            ]
+        },
+        {
+            "name": "Source Name",
+            "filter_params": 1,
+            "values": [
+                "Garlock"
+            ]
+        }
+	]
+}

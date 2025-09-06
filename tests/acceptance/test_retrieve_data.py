@@ -77,22 +77,43 @@ class TestRetrieveData(unittest.TestCase):
                 return False
         return True
 
-    def testRetrieveEventInfo(self):
-        input_file = 'inputs/accepttest.event_info.json'
-        label = 'accept_event_info'
+    def testRetrieveEventInfoAll(self):
+        input_file = 'inputs/accepttest.event_info.all.json'
+        label = 'accept_event_info_all'
+        output_dir = 'tmpdir'
+        args = ['-i', input_file, '-o', output_dir, '-l', label]
+        retrieve_cs_data.run_main(args)
+        output_file = "tmpdir/csdata.%s.query" % (label)
+        if not os.path.exists(output_file):
+            self.fail("Output file %s not created." % output_file)
+        reference_output_file = 'outputs/accepttest.event_info_all.query'
+        self.assertTrue(self.compare_query_files(reference_output_file, output_file), "Output file %s doesn't match reference file %s." % (output_file, reference_output_file))
+        output_file = "tmpdir/csdata.%s.data.csv" % (label)
+        if not os.path.exists(output_file):
+            self.fail("Output file %s not created." % output_file)
+        reference_output_file = 'outputs/accepttest.event_info_all.data.csv'
+        self.assertTrue(filecmp.cmp(reference_output_file, output_file), "Output file %s doesn't match reference file %s." % (output_file, reference_output_file))
+
+    def testRetrieveEventInfoSubset(self):
+        input_file = 'inputs/accepttest.event_info.site_subset.json'
+        label = 'accept_event_info_subset'
         output_dir = 'tmpdir'
         args = ['-i', input_file, '-o', output_dir, '-l', label]
         retrieve_cs_data.run_main(args)
         output_file = "tmpdir/csdata.%s.query" % (label)
         if not os.path.exists(output_file):
             self.fail("Output file %s not created." % output_file)  
-        reference_output_file = 'outputs/accepttest.event_info.query'
+        reference_output_file = 'outputs/accepttest.event_info.subset.query'
         self.assertTrue(self.compare_query_files(reference_output_file, output_file), "Output file %s doesn't match reference file %s." % (output_file, reference_output_file))
         output_file = "tmpdir/csdata.%s.data.csv" % (label)
         if not os.path.exists(output_file):
             self.fail("Output file %s not created." % output_file)
-        reference_output_file = 'outputs/accepttest.event_info.data.csv'
+        reference_output_file = 'outputs/accepttest.event_info.subset.data.csv'
         self.assertTrue(filecmp.cmp(reference_output_file, output_file), "Output file %s doesn't match reference file %s." % (output_file, reference_output_file))
+
+    def testRetrieveEventInfo(self):
+        self.testRetrieveEventInfoSubset()
+        self.testRetrieveEventInfoAll()
 
     def testRetrieveSiteInfo(self):
         input_file = 'inputs/accepttest.site_name.json'
