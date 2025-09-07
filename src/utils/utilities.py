@@ -36,7 +36,7 @@ import sys
 import os
 import json
 
-VERSION = "1.1.0_08262025"
+VERSION = "1.1.0_09072025"
 
 #Maximum of 120K events in the event list, because otherwise the MySQL query might be too long
 MAX_EVENT_LIST_LENGTH = 120000

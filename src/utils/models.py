@@ -101,9 +101,9 @@ def create_models(dp_list):
     model4.set_data_products(model4_data_products)
     model4.set_custom_table_name("PeakAmplitudes", "PeakAmplitudes_24_8")
     model_list.append(model4)
-    #model5 = Model('Study 24.8 BB')
-    #model5.set_periods([0.01, 0.02, 0.03, 0.04, 0.05, 0.075, 0.1, 0.2, 0.3, 0.4, 0.5, 0.75, 1, 2, 3, 4, 5, 7.5, 10, "PGV", "PGA"])
+    model5 = Model('Study 24.8 BB')
+    model5.set_periods([0.01, 0.02, 0.03, 0.04, 0.05, 0.075, 0.1, 0.2, 0.3, 0.4, 0.5, 0.75, 1, 2, 3, 4, 5, 7.5, 10, "PGV", "PGA"])
     #Has the same data products as 24.8 LF
-    #model5.set_data_products(model4_data_products)
-    #model_list.append(model5)
+    model5.set_data_products(model4_data_products)
+    model_list.append(model5)
     return model_list
