@@ -154,23 +154,28 @@ class TestRetrieveData(unittest.TestCase):
         input_file = 'inputs/accepttest.Seis.json'
         label = 'accept_Seis'
         output_dir = 'tmpdir'
+        reference_output_dir = 'outputs'
         args = ['-i', input_file, '-o', output_dir, '-l', label]
         retrieve_cs_data.run_main(args)
         output_file = "tmpdir/csdata.%s.query" % (label)
         if not os.path.exists(output_file):
             self.fail("Output file %s not created." % output_file)  
-        reference_output_file = 'outputs/accepttest.Seis.query'
+        reference_output_file = os.path.join(reference_output_dir, 'accepttest.Seis.query')
         self.assertTrue(self.compare_query_files(reference_output_file, output_file), "Output file %s doesn't match reference file %s." % (output_file, reference_output_file))
         output_file = "tmpdir/csdata.%s.data.csv" % (label)
         if not os.path.exists(output_file):
             self.fail("Output file %s not created." % output_file)
-        reference_output_file = 'outputs/accepttest.Seis.data.csv'
+        reference_output_file = os.path.join(reference_output_dir, 'accepttest.Seis.data.csv')
         self.assertTrue(filecmp.cmp(reference_output_file, output_file), "Output file %s doesn't match reference file %s." % (output_file, reference_output_file))
-        output_file = "tmpdir/csdata.%s.urls" % (label)
-        if not os.path.exists(output_file):
-            self.fail("Output file %s not created." % output_file)
-        reference_output_file = 'outputs/accepttest.Seis.urls'
-        self.assertTrue(filecmp.cmp(reference_output_file, output_file), "Output file %s doesn't match reference file %s." % (output_file, reference_output_file))
+        #Don't check the paths file, because this will be different depending on the back-end
+        #However, do check the seismograms
+        reference_output_files = ['Seismogram_USC_9306_12_0_144.grm', 'Seismogram_USC_9306_124_262_50.grm', 'Seismogram_USC_9306_124_261_38.grm', 'Seismogram_USC_9306_124_266_25.grm']
+        for f in reference_output_files:
+            if not os.path.exists(os.path.join(output_dir, f)):
+                self.fail('Seismogram file %s was not created.' % f)
+            ref_file = os.path.join(reference_output_dir, f)
+            test_file = os.path.join(output_dir, f)
+            self.assertTrue(filecmp.cmp(ref_file, test_file), 'Reference file %s does not match test file %s.' % (ref_file, test_file))
 
 
 if __name__=='__main__':

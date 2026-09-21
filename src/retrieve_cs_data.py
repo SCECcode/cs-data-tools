@@ -53,7 +53,7 @@ def parse_args(argv):
     parser.add_argument('-l', "--request-label", dest='request_label', action='store', default=None, help="Label identifying the request (optional).")
     parser.add_argument('-fl', '--filter-list', dest='print_filters', action='store_true', default=False, help="Print information about available filters and exit.")
     parser.add_argument('-pl', '--products-list', dest='print_products', action='store_true', default=False, help="Print information about available data products and exit.")
-    parser.add_argument('-c', "--config-filename", dest='config_filename', action='store', default=None, help="Path to database configuration file (optional, default: moment.cfg)")
+    parser.add_argument('-c', "--config-filename", dest='config_filename', action='store', default=None, help="Path to database configuration file (optional, default: carc.cfg)")
     parser.add_argument('-o', '--output-directory', dest='output_directory', action='store', default=".", help="Path to output directory to store files in (optional, default is current working directory).")
     parser.add_argument('-t', '--temp-directory', dest='temp_directory', action='store', default=".", help="Path to temporary directory to store files before extraction (optional, default is current working directory).")
     parser.add_argument('-i', '--input-filename', dest='input_filename', action='store', default=None, help="Path to JSON file describing desired data products and filters to apply, in format outputted by Filter Generator step.  If supplied, Filter Generator is bypassed.  (optional)")
@@ -80,9 +80,9 @@ def parse_args(argv):
     else:
         args_dict['print_products'] = False
     if args.config_filename is None:
-        #Use db_wrapper/moment.cfg as default
-        moment_cfg_path = '%s/db_wrapper/moment.cfg' % (os.path.dirname(os.path.abspath(__file__)))
-        args_dict['config_filename'] = moment_cfg_path
+        #Use db_wrapper/carc.cfg as default
+        default_cfg_path = '%s/db_wrapper/tacc.cfg' % (os.path.dirname(os.path.abspath(__file__)))
+        args_dict['config_filename'] = default_cfg_path
     else:
         args_dict['config_filename'] = args.config_filename
     args_dict['output_directory'] = args.output_directory
@@ -122,8 +122,8 @@ def run_database_wrapper(args_dict):
         arg_string = "%s -d" % arg_string
     db_wrapper.run_database_wrapper.run_main(arg_string.split())
 
-def run_data_collector(args_dict, url_file):
-    arg_string = "-i %s -o %s -t %s" % (url_file, args_dict['output_directory'], args_dict['temp_directory'])
+def run_data_collector(args_dict, paths_file):
+    arg_string = "-i %s -o %s -t %s" % (paths_file, args_dict['output_directory'], args_dict['temp_directory'])
     if args_dict['debug']==True:
         arg_string = "%s -d" % arg_string
     data_collector.run_data_collector.run_main(arg_string.split())
@@ -137,10 +137,10 @@ def run_main(argv):
         run_filter_generator(args_dict)
     run_query_builder(args_dict)
     run_database_wrapper(args_dict)
-    url_file = '%s/csdata.%s.urls' % (args_dict['output_directory'], args_dict['request_label'])
+    paths_file = '%s/csdata.%s.paths' % (args_dict['output_directory'], args_dict['request_label'])
     #By checking if this file exists, we're checking both that we want seismograms and also that the storage requirements are low enough.
-    if os.path.exists(url_file):
-        run_data_collector(args_dict, url_file)
+    if os.path.exists(paths_file):
+        run_data_collector(args_dict, paths_file)
     print("\nData retrieval is complete!")
 
 if __name__=='__main__':

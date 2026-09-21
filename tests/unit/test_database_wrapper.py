@@ -60,13 +60,13 @@ class TestDatabaseWrapper(unittest.TestCase):
         shutil.copy('inputs/unittest.IMs.csv', 'tmpdir')
         shutil.copy('inputs/unittest.Seis.query', 'tmpdir')
         shutil.copy('inputs/unittest.Seis.csv', 'tmpdir')
-        shutil.copy('inputs/unittest.Seis.urls', 'tmpdir')
+        shutil.copy('inputs/unittest.Seis.paths', 'tmpdir')
         
 
-    @classmethod
-    def tearDownClass(self):
-        if os.path.exists('tmpdir'):
-            shutil.rmtree('tmpdir')
+    #@classmethod
+    #def tearDownClass(self):
+    #    if os.path.exists('tmpdir'):
+    #        shutil.rmtree('tmpdir')
 
     def testDBSiteInfo(self):
         input_file = 'tmpdir/unittest.site_name.query'
@@ -111,8 +111,8 @@ class TestDatabaseWrapper(unittest.TestCase):
             self.fail("Output file %s was not created." % test_output_file)
         self.assertTrue(filecmp.cmp(reference_output_file, test_output_file), "Test query file %s does not match reference file %s." % (test_output_file, reference_output_file))
         #Check URL files also
-        if not os.path.exists('tmpdir/unittest.Seis.urls'):
-            self.fail("Output file unittest.Seis.urls was not created.")
+        if not os.path.exists('tmpdir/unittest.Seis.paths'):
+            self.fail("Output file unittest.Seis.paths was not created.")
         self.assertTrue(filecmp.cmp(reference_output_file, test_output_file), "Test query file %s does not match reference file %s." % (test_output_file, reference_output_file))
 
 

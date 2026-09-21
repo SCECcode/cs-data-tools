@@ -56,7 +56,8 @@ MAX_OUTPUT_DATA_MB = 1000
 
 globus_dict = dict()
 globus_dict['Study 15.12'] = "https://g-41ed52.a78b8.36fe.data.globus.org"
-globus_dict['Study 22.12 LF'] = "https://g-8f2de8.a78b8.36fe.data.globus.org"
+#globus_dict['Study 22.12 LF'] = "https://g-8f2de8.a78b8.36fe.data.globus.org"
+globus_dict['Study 22.12 LF'] = "https://m-9ebd7e.1b03b0.5898.data.globus.org/corral/projects/DS-Cybershake/Study_22.12_LF"
 globus_dict['Study 22.12 BB'] = "https://g-4ee012.a78b8.36fe.data.globus.org"
 #No entries for 24.8 yet
 
@@ -70,7 +71,7 @@ debug = False
 
 def get_default_config():
     #Returns path to default config file
-    return "%s/moment.cfg" % (os.path.dirname(os.path.abspath(__file__)))
+    return "%s/tacc.cfg" % (os.path.dirname(os.path.abspath(__file__)))
 
 def parse_args(argv):
     global debug
@@ -98,7 +99,7 @@ def parse_args(argv):
     else:
         output_filename = args.output_filename
     if args.config_filename is None:
-        #Set it to the directory this file is in + moment.cfg
+        #Set it to the directory this file is in + the default config file
         args.config_filename = get_default_config()
     args_dict['output_filename'] = output_filename
     args_dict['config_filename'] = args.config_filename
@@ -126,18 +127,18 @@ def execute_queries(config_dict, input_dict):
     if (debug):
         start_time = timeit.default_timer()
     try:
-        if config_dict['type'].lower()=='mysql':
-            conn = pymysql.connect(host=config_dict["host"], user=config_dict["user"], passwd=config_dict["password"], db=config_dict['db'])
-        elif config_dict['type'].lower()=='sqlite':
+        if config_dict['db_type'].lower()=='mysql':
+            conn = pymysql.connect(host=config_dict["db_host"], user=config_dict["db_user"], passwd=config_dict["db_password"], db=config_dict['db_name'])
+        elif config_dict['db_type'].lower()=='sqlite':
             conn = sqlite3.connect(config_dict['db_path'])
         else:
             print("Database type %s not recognized, aborting.", file=sys.stderr)
             sys.exit(utilities.ExitCodes.DATABASE_CONNECTION_ERROR)
     except Exception as e:
-        error_str = "Error connecting to %s database" % config_dict['type']
-        if config_dict['type'].lower()=='mysql':
-            error_str = "%s %s on host %s with username %s and password %s, aborting." % (error_str, config_dict['db'], config_dict['host'], config_dict['user'], config_dict['password'])
-        elif config_dict['type'].lower()=='sqlite':
+        error_str = "Error connecting to %s database" % config_dict['db_type']
+        if config_dict['db_type'].lower()=='mysql':
+            error_str = "%s %s on host %s with username %s and password %s, aborting." % (error_str, config_dict['db_name'], config_dict['db_host'], config_dict['db_user'], config_dict['db_password'])
+        elif config_dict['db_type'].lower()=='sqlite':
             error_str = "%s %s, aborting." % (error_str, config_dict['db_path'])
         print(error_str, file=sys.stderr)
         print(e)
@@ -168,12 +169,13 @@ def execute_queries(config_dict, input_dict):
         print("Database query took %f sec." % (end_time-start_time))
     return res
 
-#If data product is seismograms, write a url file and calculate data size
-def write_url_file(args_dict, input_dict, config_dict, result_set):
+#If data product is seismograms, write a path file and calculate data size
+def write_path_file(args_dict, input_dict, config_dict, result_set):
     print("Calculating disk space required for seismograms.")
     seis_dict = dict()
     temp_disk_space_mb = 0.0
     track_file_size = True
+    use_config_db = False
     #Attempt to query # of rupture variations using built-in SQLite DB
     try:
         num_rvs_db_path = '%s/../utils/num_rvs.sqlite' % (os.path.dirname(os.path.abspath(__file__)))
@@ -182,11 +184,12 @@ def write_url_file(args_dict, input_dict, config_dict, result_set):
             conn = sqlite3.connect(num_rvs_db_path)
         else:
             print("Using config file DB to determine data size.")
-        #Open connection to query # of rupture variations
-        if config_dict['type'].lower()=='mysql':
-            conn = pymysql.connect(host=config_dict["host"], user=config_dict["user"], passwd=config_dict["password"], db=config_dict['db'])
-        elif config_dict['type'].lower()=='sqlite':
-            conn = sqlite3.connect(config_dict['db_path'])
+            use_config_db = True
+            #Open connection to query # of rupture variations
+            if config_dict['db_type'].lower()=='mysql':
+                conn = pymysql.connect(host=config_dict["db_host"], user=config_dict["db_user"], passwd=config_dict["db_password"], db=config_dict['db_name,'])
+            elif config_dict['db_type'].lower()=='sqlite':
+                conn = sqlite3.connect(config_dict['db_path'])
         cur = conn.cursor()
     except Exception as e:
         error_str = "Error connecting to database to determine data size.  Will continue without data size information."
@@ -195,10 +198,12 @@ def write_url_file(args_dict, input_dict, config_dict, result_set):
         track_file_size = False
     for row in result_set:
         study_name = row['Study_Name']
-        if study_name not in globus_dict:
+        file_access_type = config_dict['file_method']
+        study_paths_dict = config_dict['study_paths'] 
+        if study_name not in study_paths_dict:
             print("Not sure where to download seismograms from for study %s, aborting." % study_name, file=sys.stderr)
-            sys.exit(utilities.ExitCodes.DATABASE_CONNECTION_ERROR)
-        study_prefix = globus_dict[study_name]
+            sys.exit(utilities.ExitCodes.FILE_DOWNLOAD_ERROR)
+        study_prefix = study_paths_dict[study_name]
         study_suffix = ".grm"
         rv_seis_size = utilities.get_rv_seismogram_size(study_name)
         #Add the '_bb' to seismogram filenames for broadband studies
@@ -210,19 +215,27 @@ def write_url_file(args_dict, input_dict, config_dict, result_set):
         source_id = row['Source_ID']
         rupture_id = row['Rupture_ID']
         rup_var_id = row['Rup_Var_ID']
-        full_url = '%s/%s/%d/Seismogram_%s_%d_%d%s' % (study_prefix, site_name, run_id, site_name, source_id, rupture_id, study_suffix)
-        if full_url in seis_dict:
-            seis_dict[full_url] = "%s,%d" % (seis_dict[full_url], rup_var_id)
+        if file_access_type=="url":
+            protocol = "https://"
+        elif file_access_type=="scp":
+            protocol = "scp "
+        full_path = '%s%s/%s/%d/Seismogram_%s_%d_%d%s' % (protocol, study_prefix, site_name, run_id, site_name, source_id, rupture_id, study_suffix)
+        if full_path in seis_dict:
+            seis_dict[full_path] = "%s,%d" % (seis_dict[full_path], rup_var_id)
         else:
-            seis_dict[full_url] = "%d" % (rup_var_id)
+            seis_dict[full_path] = "%d" % (rup_var_id)
             #Figure out size
             if track_file_size==True:
-                num_rvs_query = 'select Studies.Study_Name, count(*) from Rupture_Variations, CyberShake_Runs, Studies ' \
-                    'where Studies.Study_ID=CyberShake_Runs.Study_ID and CyberShake_Runs.Run_ID=%d and CyberShake_Runs.ERF_ID=Rupture_Variations.ERF_ID and CyberShake_Runs.Rup_Var_Scenario_ID=Rupture_Variations.Rup_Var_Scenario_ID and Rupture_Variations.Source_ID=%d and Rupture_Variations.Rupture_ID=%d' \
-                    % (run_id, source_id, rupture_id)
+                if use_config_db==True: 
+                    num_rvs_query = 'select count(*) from Rupture_Variations, CyberShake_Runs, Studies ' \
+                        'where Studies.Study_ID=CyberShake_Runs.Study_ID and Studies.Study_Name="%s" and CyberShake_Runs.Run_ID=%d and CyberShake_Runs.ERF_ID=Rupture_Variations.ERF_ID and CyberShake_Runs.Rup_Var_Scenario_ID=Rupture_Variations.Rup_Var_Scenario_ID and Rupture_Variations.Source_ID=%d and Rupture_Variations.Rupture_ID=%d' \
+                        % (study_name, run_id, source_id, rupture_id)
+                else:
+                    num_rvs_query = 'select Num_Rup_Vars from Rupture_Variation_Counts where Study_Name="%s" and Source_ID=%d and Rupture_ID=%d' % (study_name, source_id, rupture_id)
                 cur.execute(num_rvs_query)
-                (study_name, num_rvs) = cur.fetchone()
+                num_rvs = cur.fetchone()[0]
                 temp_disk_space_mb += num_rvs*rv_seis_size/(1000000.0)
+                   
     if track_file_size==True and len(result_set)>0:
         conn.close()
         output_disk_space_mb = rv_seis_size*len(result_set)/(1000000.0)
@@ -238,8 +251,8 @@ def write_url_file(args_dict, input_dict, config_dict, result_set):
             print("Either increase MAX_OUTPUT_DATA_MB in run_database_wrapper.py or request fewer seismograms.")
             #Don't write out a URL file
             return
-    url_filename = "%s.urls" % args_dict['output_filename'].rsplit(".", 1)[0]
-    with open(url_filename, 'w') as fp_out:
+    path_filename = "%s.paths" % args_dict['output_filename'].rsplit(".", 1)[0]
+    with open(path_filename, 'w') as fp_out:
         for key in seis_dict:
             fp_out.write("%s %s\n" % (key, seis_dict[key]))
         fp_out.flush()
@@ -324,9 +337,9 @@ def write_results(result_set, args_dict, input_dict, config_dict):
         print("Error writing data to output file %s, aborting." % (args_dict['output_filename']), file=sys.stderr)
         print(e)
         sys.exit(utilities.ExitCodes.FILE_WRITING_ERROR)
-    #If we're doing seismograms, need to create URL file
+    #If we're doing seismograms, need to create path file
     if input_dict['data_product']=="Seismograms":
-        write_url_file(args_dict, input_dict, config_dict, result_set)
+        write_path_file(args_dict, input_dict, config_dict, result_set)
     print("Database results are available in %s." % filename)
  
         
