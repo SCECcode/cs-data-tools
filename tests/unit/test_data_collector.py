@@ -54,7 +54,7 @@ class TestDataCollector(unittest.TestCase):
             os.mkdir('tmpdir')
         shutil.copy('inputs/unittest.Seis.query', 'tmpdir')
         shutil.copy('inputs/unittest.Seis.csv', 'tmpdir')
-        shutil.copy('inputs/unittest.Seis.urls', 'tmpdir')
+        shutil.copy('inputs/unittest.Seis.paths', 'tmpdir')
         if not os.path.exists(os.path.join('tmpdir', 'test_output')):
             os.mkdir(os.path.join('tmpdir', 'test_output'))
 
@@ -66,7 +66,7 @@ class TestDataCollector(unittest.TestCase):
             shutil.rmtree('USC')   
 
     def testDataSeismograms(self):
-        input_file = 'tmpdir/unittest.Seis.urls'
+        input_file = 'tmpdir/unittest.Seis.paths'
         output_dir = 'tmpdir/test_output'
         reference_output_dir = 'outputs'
         args = ['-i', input_file, '-o', output_dir]

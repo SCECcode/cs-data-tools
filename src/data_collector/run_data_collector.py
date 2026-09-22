@@ -38,6 +38,7 @@ import argparse
 import urllib.request
 import timeit
 import struct
+import subprocess
 
 #Add one directory level above to path to find imports
 full_path = os.path.abspath(sys.argv[0])
@@ -95,21 +96,45 @@ def retrieve_files(args_dict):
         num_files = len(data)
         for i, line in enumerate(data):
             print("Downloading file %d of %d." % (i+1, num_files))
-            (url, rvs) = line.strip().split()
+            (path, rvs) = line.strip().rsplit(" ", 1)
             #Use directory hierarchy of temp_directory/site_id/run_id
-            (protocol, blank, prefix, site_name, run_id, basename) = url.split("/")
+            #If URL, form https://<directory path>/site_id/run_id/basename
+            #If SCP, form scp <hostname>:/<directory path>/site_id/run_id/basename
+            if path[0:4]=="http":
+                (prefix, site_name, run_id, basename) = path.rsplit("/", 3)
+                method = "url"
+            elif path[0:4]=="scp ":
+                (host_info, prefix, site_name, run_id, basename) = path.rsplit("/", 4)
+                method = "scp"
+            else:
+                print("File access protocol %s is not recognized, aborting." % path[0:4])
+                sys.exit(utilities.ExitCodes.FILE_PARSING_ERROR)
             local_directory = "%s/%s/%s" % (args_dict['temp_directory'], site_name, run_id)
             if not os.path.exists(local_directory):
                 os.makedirs(local_directory)
             local_filename = "%s/%s" % (local_directory, basename)
             local_filenames.append(local_filename)
             if debug:
-                print("File URL: %s" % url)
-            url_data = urllib.request.urlopen(url).read()
-            with open(local_filename, 'wb') as fp_out:
-                fp_out.write(url_data)
-                fp_out.flush()
+                print("File path: %s" % path)
+            if method=="url":
+                req = urllib.request.Request(path)
+                req.add_header("User-Agent", "Mozilla/5.0")
+                url_data = urllib.request.urlopen(req).read()
+                with open(local_filename, 'wb') as fp_out:
+                    fp_out.write(url_data)
+                    fp_out.flush()
                 fp_out.close()
+            elif method=="scp":
+                src_path = path.split()[1]
+                tmp_log_file = "file_transfer.log"
+                with open(tmp_log_file, "w") as fp_out:
+                    try:
+                        subprocess.run(["scp", src_path, local_filename], stderr=subprocess.STDOUT, stdout=fp_out, check=True)
+                    except subprocess.CalledProcessError as cpe:
+                        print("File transfer failed with return code {cpe.returncode}.  See {tmp_log_file} log file for more details.")
+                        sys.exit(utilities.ExitCodes.FILE_DOWNLOAD_ERROR)
+                os.remove(tmp_log_file)
+
         fp_in.close()
     return local_filenames
 
@@ -121,13 +146,18 @@ def extract_rvs(args_dict):
         for i, line in enumerate(data):
             if (i%100==0):
                 print("Extracting rupture variations from file %d of %d." % ((i+1), num_files))
-            (url, rvs) = line.strip().split()
-            (protocol, blank, prefix, site_name, run_id, basename) = url.split("/")
+            (path, rvs) = line.strip().rsplit(" ", 1)
+            if path[0:4]=="http":
+                (protocol, blank, prefix, site_name, run_id, basename) = path.split("/")
+            elif path[0:4]=="scp ":
+                #Prefix part might be complex
+                (host_info, rest_of_path) = path.split("/", 1)
+                (prefix, site_name, run_id, basename) = path.rsplit("/", 3)
             rv_list = []
             for rv in rvs.split(","):
                 rv_list.append(int(rv))
             local_rupture_directory = "%s/%s/%s" % (args_dict['temp_directory'], site_name, run_id)
-            local_rupture_filename = "%s/%s" % (local_rupture_directory, url.rsplit("/", 1)[1])
+            local_rupture_filename = "%s/%s" % (local_rupture_directory, path.rsplit("/", 1)[1])
             sizeof_float = 4
             num_components = 2
             with open(local_rupture_filename, 'rb') as fp_rup_in:

@@ -3,7 +3,7 @@
 """
 BSD 3-Clause License
 
-Copyright (c) 2023, University of Southern California
+Copyright (c) 2026, University of Southern California
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -36,7 +36,7 @@ import sys
 import os
 import json
 
-VERSION = "1.1.0_09072025"
+VERSION = "1.2.0_09112026"
 
 #Maximum of 120K events in the event list, because otherwise the MySQL query might be too long
 MAX_EVENT_LIST_LENGTH = 120000
@@ -117,8 +117,17 @@ def read_config(config_file):
     with open(config_file, "r") as fp_in:
         data = fp_in.readlines()
         for line in data:
-            (key, value) = line.split("=")
-            config_dict[key.strip()] = value.strip()
+            if line[0]=="#" or line.strip()=="":
+                continue
+            (key, value) = line.split("=", 1)
+            if value.find(",")>=0 or value.find(":")>=0:
+                value_dict = dict()
+                for p in value.split(","):
+                    (value_key, value_value) = p.split(":", 1)
+                    value_dict[value_key.strip()] = value_value.strip()
+                config_dict[key.strip()] = value_dict
+            else:
+                config_dict[key.strip()] = value.strip()
         fp_in.close()
     return config_dict
 

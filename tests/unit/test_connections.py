@@ -40,6 +40,7 @@ import filecmp
 import pymysql
 import sqlite3
 import requests
+import subprocess
 
 #Add src directory to find imports 
 full_path = os.path.abspath(sys.argv[0])
@@ -47,6 +48,7 @@ path_add = os.path.dirname(os.path.dirname(os.path.dirname(full_path)))
 sys.path.append("%s/src" % path_add)
 
 import db_wrapper.run_database_wrapper as run_database_wrapper
+import utils.utilities as utilities
 
 class TestConnections(unittest.TestCase):
    '''Unit tests to test DB connection, and access to seismograms'''
@@ -56,35 +58,52 @@ class TestConnections(unittest.TestCase):
       cfg_file = run_database_wrapper.get_default_config()
       try:
          #Confirm you can authenticate
-         cfg_dict = run_database_wrapper.read_input(cfg_file)
-         if cfg_dict['type']=='MySQL':
-            conn = pymysql.connect(host=cfg_dict['host'],db=cfg_dict['db'],user=cfg_dict['user'],passwd=cfg_dict['password'])
+         cfg_dict = utilities.read_config(cfg_file)
+         if cfg_dict['db_type']=='MySQL':
+            conn = pymysql.connect(host=cfg_dict['db_host'],db=cfg_dict['db_name'],user=cfg_dict['db_user'],passwd=cfg_dict['db_password'])
             #Run simple query, make sure it has a PeakAmps table
             cur = conn.cursor()
             query = 'show create table PeakAmplitudes'
             cur.execute(query)
             res = cur.fetchall()
-            self.assertEqual(len(res), 1, "Error checking PeakAmplitudes schema in the %s MySQL database on host %s." % (cfg_dict['db'], cfg_dict['host']))
+            self.assertEqual(len(res), 1, "Error checking PeakAmplitudes schema in the %s MySQL database on host %s." % (cfg_dict['db_name'], cfg_dict['db_host']))
             conn.close()
-         elif cfg_dict['type']=='SQLite':
+         elif cfg_dict['db_type']=='SQLite':
             conn = sqlite3.connect(cfg_dict['db_path'])
             cur = conn.cursor()
             query = '.schema PeakAmplitudes'
             cur.execute(query)
             res = cur.fetchall()
-            self.assertEqual(len(res), 1, "Error checking PeakAmplitudes schema in the %s SQLite database." % (cfg_dict['db_path'], cfg_dict['host']))
+            self.assertEqual(len(res), 1, "Error checking PeakAmplitudes schema in the %s SQLite database." % (cfg_dict['db_path']))
             conn.close()           
       except:
          self.fail("Error connecting using default configuration file %s." % cfg_file)
 
 
    def testSeisAccess(self):
-      for (k, v) in run_database_wrapper.globus_dict.items():
-         try:
-            response = requests.get(v)
-            self.assertEqual(200, response.status_code, "Did not get valid response from URL %s, the prefix for seismograms from %s." % (v, k))
-         except:
-            self.fail("Could not connect to URL %s, the prefix for seismograms from %s." % (v, k))
+      cfg_file = run_database_wrapper.get_default_config()
+      cfg_dict = utilities.read_config(cfg_file)
+      test_study_name="Study 22.12 LF"
+      if cfg_dict['file_method']=='url':
+          try:
+              test_url = cfg_dict['study_paths'][test_study_name]
+              response = requests.get(test_url)
+              self.assertEqual(200, response.status_code, "Did not get valid response from URL %s, the prefix for seismograms from %s." % (test_url, test_study_name))
+          except:
+              self.fail("Could not connect to path %s, the prefix for seismograms from %s." % (test_url, test_study_name))
+      elif cfg_dict['file_method']=='scp':
+          try:
+              test_path = cfg_dict['study_paths'][test_study_name]
+              (host, file_path) = test_path.split(":")
+              tmp_log_file = "file_transfer.log"
+              with open(tmp_log_file, "w") as fp_out:
+                  cp = subprocess.run(["ssh", host, 'stat %s' % (file_path)], stderr=subprocess.STDOUT, stdout=fp_out)
+                  self.assertEqual(0, cp.returncode, "Was not able to stat path %s on host %s, the prefix for seismograms from %s.  Details are in %s." % (file_path, host, test_study_name, tmp_log_file))
+              os.remove(tmp_log_file)
+          except:
+              self.fail("Could not access path %s on host %s, the prefix for seismograms from %s." % (file_path, host, test_study_name))
+      else:
+          self.fail("Don't recognize file connection method %s in the configuration file." % cfg_file['file_method'])
       
 
 if __name__=='__main__':
