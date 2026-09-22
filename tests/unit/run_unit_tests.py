@@ -39,11 +39,13 @@ import unittest
 from test_query_builder import TestQueryBuilder
 from test_database_wrapper import TestDatabaseWrapper
 from test_data_collector import TestDataCollector
+from test_input_gen import TestInputGen
 
 test_suite = unittest.TestSuite()
-test_suite.addTest(unittest.makeSuite(TestQueryBuilder))
-test_suite.addTest(unittest.makeSuite(TestDatabaseWrapper))
-test_suite.addTest(unittest.makeSuite(TestDataCollector))
+test_suite.addTest(unittest.TestLoader().loadTestsFromTestCase(TestQueryBuilder))
+test_suite.addTest(unittest.TestLoader().loadTestsFromTestCase(TestDatabaseWrapper))
+test_suite.addTest(unittest.TestLoader().loadTestsFromTestCase(TestDataCollector))
+test_suite.addTest(unittest.TestLoader().loadTestsFromTestCase(TestInputGen))
 
 print("Running unit tests...")
 rc = unittest.TextTestRunner(verbosity=2).run(test_suite)
