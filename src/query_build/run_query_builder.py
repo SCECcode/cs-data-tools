@@ -91,8 +91,12 @@ def load_data():
 
 def parse_json(input_filename):
     try:
-          fp_in = open(input_filename, 'r')
-          json_dict = json.load(fp_in)
+          if input_filename=='-':
+                #Read the JSON from stdin, so the request can be piped in
+                json_dict = json.load(sys.stdin)
+          else:
+                fp_in = open(input_filename, 'r')
+                json_dict = json.load(fp_in)
     except Exception as e:
           print("Error parsing JSON file %s, aborting." % input_filename)
           print(e)
