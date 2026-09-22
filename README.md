@@ -107,66 +107,15 @@ If you want to bypass the interactive part of the request, you can use the '-i' 
 
 #### Non-interactive data requests
 
-The input generator, input_gen/run_input_gen.py, builds a data-request JSON without the interactive prompts, so an application can make requests programmatically.  It reads the request variables from command-line arguments, validates them against the same models, data products, and filters the interactive tool uses, and writes the JSON to stdout in exactly the format the Filter Generator would have written.  The human-readable summary is written to stderr, so stdout carries only the JSON.  It only *produces* the JSON; running the data-access pipeline is the next step.  Pipe the output directly into the data-access tool:
+If you want to skip the interactive prompts, you can generate a data request with the input generator, input_gen/run_input_gen.py.  You give it a model, a data product, and any filters and sort options on the command line, and it validates the request and writes the same data-request JSON the interactive tool produces.  The JSON is written to stdout, and a human-readable summary goes to stderr, so you can pipe the output directly into the data-access tool:
 
 `$> cs-data-tools/src/input_gen/run_input_gen.py -m "Study 22.12 LF" -p "Site Info" --filter SITE_NAME=USC | cs-data-tools/src/retrieve_cs_data.py -i - -o ./out -t ./tmp`
 
-Or into the query-construction stage alone:
-
-`$> cs-data-tools/src/input_gen/run_input_gen.py -m "Study 22.12 LF" -p "Site Info" --filter SITE_NAME=USC | cs-data-tools/src/query_build/run_query_builder.py -i - -o my.request.query`
-
-Or redirect it to a file with '>':
+Or save the request to a file with '>' for later use:
 
 `$> cs-data-tools/src/input_gen/run_input_gen.py -m "Study 22.12 LF" -p "Site Info" --filter SITE_NAME=USC > myrequest.json`
 
-| Flag | Meaning |
-|---|---|
-| `-m, --model` | Required.  `Study 22.12 LF`, `Study 22.12 BB`, `Study 24.8 LF`, or `Study 24.8 BB` (case-insensitive; the "study" prefix is optional) |
-| `-p, --product` | Required.  `Site Info`, `Seismograms`, `Intensity Measures`, or `Event Info` (case-insensitive).  Seismograms are not available for the 24.8 models. |
-| `--filter NAME=VALUE` | Optional, repeatable.  Filter values.  `NAME` is a filter name in upper case with spaces replaced by underscores (e.g. `SITE_NAME`, `INTENSITY_MEASURE_PERIOD_PARAMS`).  Numeric filters accept comma- and/or space-separated values; string filters (Site Name, Source Name) split on commas only, so spaces stay part of the value (quote the argument for the shell: `--filter "SOURCE_NAME=San Andreas"`).  A value with spaces must be a single quoted argument.  A blank value (empty, quoted-empty, or whitespace-only) is stripped and ignored. |
-| `--filter NAME_PARAMS=VALUE` | `1` single value, `2` multiple values, `3` range.  Optional when exactly one value is given (inferred 1); required otherwise |
-| `--sort-by NAME` | Optional.  Sort the results on one of the selected filters, e.g. `--sort-by MAGNITUDE` (same `NAME` form as `--filter`).  Only one filter can be sorted on, mirroring the interactive tool. |
-| `--sort-order ASC\|DESC` | Optional.  The direction for `--sort-by`; defaults to ascending.  `asc`/`ascending`/`1` and `desc`/`descending`/`-1` are accepted. |
-| `-e <event list filename>` | Optional CSV of `<src id>,<rup id>,<rup var id>` lines; bypasses the event filters.  Max 120000 events. |
-| `-v` | Print the version. |
-
-The filter names and valid values are those defined by the interactive tool, so they are always in sync with it:
-
-| Filter | Type | Value forms | Valid values | Applies to |
-|---|---|---|---|---|
-| `Site Name` | string | 1, 2 | 3-5 character site short name | Site Info, Seismograms, Intensity Measures, Event Info |
-| `Intensity Measure Period` | float or `PGV`/`PGA` | 1, 2 | one of the model's periods (below); `PGV`/`PGA` only as a single value | Seismograms, Intensity Measures |
-| `Intensity Measure Value` | float (cm/sec2) | 1, 2, 3 | [0.0, 10000.0]; requires `Intensity Measure Period` | Seismograms, Intensity Measures |
-| `Magnitude` | float | 1, 2, 3 | [5.0, 8.5] | Seismograms, Intensity Measures, Event Info |
-| `Site-Rupture Distance` | float (km) | 1, 2, 3 | [0.0, 200.0]; requires `Site Name` | Seismograms, Intensity Measures, Event Info |
-| `Source Name` | string | 1, 2 | substring match | Seismograms, Intensity Measures, Event Info |
-
-`Intensity Measure Period` values per model (the model's RotD50 periods):
-
-| Model | Periods |
-|---|---|
-| Study 22.12 LF / Study 24.8 LF | 2.0, 3.0, 4.0, 5.0, 7.5, 10.0, PGV |
-| Study 22.12 BB / Study 24.8 BB | 0.01, 0.02, 0.03, 0.04, 0.05, 0.075, 0.1, 0.2, 0.3, 0.4, 0.5, 0.75, 1, 2, 3, 4, 5, 7.5, 10, PGV, PGA |
-
-The generator fails fast: the first invalid input aborts with a message on stderr and an exit code from src/utils/utilities.py:
-
-| Exit | Meaning |
-|---|---|
-| 0 | request generated successfully |
-| 1 | data product not available for the model |
-| 3 | unknown model |
-| 4 | value outside a filter's range or enum, or invalid sort order |
-| 5 | malformed `--filter` argument, unknown filter name, malformed value/illegal characters, bad `_PARAMS` value or value form, filter not applicable to the product, `--sort-by` naming an unknown or unselected filter, `--filter NAME_SORT` (no longer supported) |
-| 6 | missing `-m/--model` or `-p/--product`, missing `_PARAMS` with 2+ values, unmet required filter |
-| 7 | unparseable event-list CSV; over 120000 events |
-| 8 | event-list file unreadable |
-
-Notes:
-
-- Blank parameter values are stripped and ignored: empty, quoted-empty, or whitespace-only values (e.g. `--filter SITE_NAME=`, `--filter "SOURCE_NAME="""`, `--sort-by ""`, `-m ""`, or a repeated `-m`/`-p` where one occurrence is empty) produce no warning and no effect, so front-end forms emitting hidden empty-valued elements work as-is.  An orphan `--sort-order` with no `--sort-by` is likewise ignored with a warning.
-- Numeric filter values are emitted as JSON floats (e.g. `2` becomes `2.0`), matching what the interactive tool writes.
-- String filter values may not contain `"`, `\`, `,`, `|`, `&`, `$`, backtick, `(`, `)`, `<`, `>`, `;`, or control characters.
-- Numeric literals are strict: optional `-`, digits, optional decimals and exponent.  `nan`, `inf`, and `0x10` are rejected.
+Run it with `-h` to see all the command-line options.  The filter names and valid values are the same ones the interactive tool prompts you for.
 
 #### Individual components
 
