@@ -86,7 +86,8 @@ class TestConnections(unittest.TestCase):
       test_study_name="Study 22.12 LF"
       if cfg_dict['file_method']=='url':
           try:
-              test_url = cfg_dict['study_paths'][test_study_name]
+              #study_paths values don't include the protocol; the tool adds it.
+              test_url = "https://%s" % cfg_dict['study_paths'][test_study_name]
               response = requests.get(test_url)
               self.assertEqual(200, response.status_code, "Did not get valid response from URL %s, the prefix for seismograms from %s." % (test_url, test_study_name))
           except:
