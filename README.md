@@ -3,7 +3,7 @@
 ## Description 
 The CyberShake Data Access tool is an interactive pure Python tool which retrieves [CyberShake](https://www.scec.org/software/cybershake) data products.
 
-Data products and metadata are retrieved through database queries.  Seismograms are downloaded from Globus shared collections hosted at USC CARC.
+Data products and metadata are retrieved through database queries.  Seismograms are downloaded from Globus-hosted storage collections, either DesignSafe (hosted at the Texas Advanced Computing Center) by default, or the collections hosted at USC CARC, depending on the configuration file used.
 
 ## Concepts
 
@@ -91,11 +91,15 @@ Note that there is a limit of 120,000 events in an event list file, due to the m
 
 #### Database backend
 
-By default, the tool uses the CyberShake database hosted at moment.usc.edu.  Configuration parameters to connect to this database are specified in db_wrapper/moment.cfg.  If you prefer, you can point the tool to an alternative CyberShake database by creating a new cfg file and using the '-c <config file>' command-line argument, like:
+By default, the tool uses the CyberShake database hosted at the Texas Advanced Computing Center (TACC), and downloads seismograms from DesignSafe storage.  Configuration parameters for this are specified in db_wrapper/tacc.cfg.
 
-`$> cs-data-tools/src/retrieve_cs_data.py -c new_db.cfg`
+If you prefer, you can use the CyberShake database hosted at moment.usc.edu, with seismograms downloaded from the Globus collections hosted at USC CARC, by running the tool with the '-c <config file>' command-line argument, like:
+
+`$> cs-data-tools/src/retrieve_cs_data.py -c cs-data-tools/src/db_wrapper/carc.cfg`
 
 The tool supports MySQL and SQLite format databases.  A sample SQLite configuration file is included in db_wrapper/sqlite.cfg.
+
+The configuration files specify how to connect to the database (db_type, db_host, db_user, db_password, and db_name for MySQL; db_path for SQLite) and, for seismogram requests, where to download seismograms from (file_method, either 'url' or 'scp', and study_paths, mapping each study name to its storage location).  Seismograms are currently only available for Study 22.12.  You can copy one of the configuration files and edit it to point the tool at an alternative database or storage location.
 
 #### Alternative output formats
 
