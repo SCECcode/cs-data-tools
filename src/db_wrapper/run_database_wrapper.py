@@ -50,9 +50,9 @@ import utils.filters as filters
 import utils.data_products as data_products
 
 #Maximum size of temporary storage, in MB
-MAX_TEMP_DATA_MB = 1000
+MAX_TEMP_DATA_MB = 10000
 #Maximum size of output seismograms, in MB
-MAX_OUTPUT_DATA_MB = 1000
+MAX_OUTPUT_DATA_MB = 10000
 
 globus_dict = dict()
 globus_dict['Study 15.12'] = "https://g-41ed52.a78b8.36fe.data.globus.org"
@@ -187,7 +187,7 @@ def write_path_file(args_dict, input_dict, config_dict, result_set):
             use_config_db = True
             #Open connection to query # of rupture variations
             if config_dict['db_type'].lower()=='mysql':
-                conn = pymysql.connect(host=config_dict["db_host"], user=config_dict["db_user"], passwd=config_dict["db_password"], db=config_dict['db_name,'])
+                conn = pymysql.connect(host=config_dict["db_host"], user=config_dict["db_user"], passwd=config_dict["db_password"], db=config_dict['db_name'])
             elif config_dict['db_type'].lower()=='sqlite':
                 conn = sqlite3.connect(config_dict['db_path'])
         cur = conn.cursor()
